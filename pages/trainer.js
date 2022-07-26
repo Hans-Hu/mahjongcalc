@@ -1,17 +1,16 @@
-import React from 'react';
+import React from 'react'
+import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Link from '../src/Link';
 
-export default function Index() {
+export default function Trainer() {
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Calculator
+          Trainer
         </Typography>
       </Box>
     </Container>
-  );
+  )
 }
