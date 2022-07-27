@@ -27,6 +27,19 @@ const theme = createTheme({
     h1: {
       fontSize: '1.5rem',
       color: white
+    },
+    h2: {
+      fontSize: '1.25rem',
+      color: white
+    }
+  },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 1076,
+      lg: 1200,
+      xl: 1536,
     }
   }
 });
