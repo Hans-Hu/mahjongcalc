@@ -1,5 +1,5 @@
-const dragonTilesMapping = { "green": "hatsu", "red": "chun", "white": "haku" }
-const windTilesMapping = { "east": "ton", "south": "nan", "west": "shaa", "north": "pei" }
+const dragonTilesMapping = { "green": "zhatsu", "red": "zhun", "white": "zhaku" }
+const windTilesMapping = { "east": "y1ton", "south": "y2nan", "west": "y3shaa", "north": "y4pei" }
 export const suits = ["man", "pin", "sou"];
 export const honors = ["east", "south", "west", "north", "white", "green", "red"];
 
