@@ -6,18 +6,22 @@ import Link from '../src/Link';
 import Grid from '@mui/material/Grid';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from "@mui/material/styles";
-import { getSuitTiles, getHonorTiles, suits, honors } from '../src/mahjong/tileMapping';
+import { getSuitTiles, getHonorTiles } from '../src/mahjong/tileMapping';
+import {suits, honors} from '../src/mahjong/tile';
 import Button from '@mui/material/Button';
 
 export default function Index() {
   const theme = useTheme();
+  const matchesSM = useMediaQuery(theme.breakpoints.down("sm"));
   const matchesMD = useMediaQuery(theme.breakpoints.down("md"));
+  const matchesLG = useMediaQuery(theme.breakpoints.down("lg"));
 
   const [seatWind, setSeatWind] = useState(null);
   const [roundWind, setRoundWind] = useState(null);
   const [dora, setDora] = useState([]);
   const [hand, setHand] = useState(Array(13).fill(null));
   const [winningTile, setWinningTile] = useState(null);
+  const [riichiDeclared, setRiichiDeclared] = useState(1);
 
   const [selectedIndex, setSelectedIndex] = useState(0); // 0 - seat, 1 - round, 2 - dora, 3 - hand
 
@@ -30,13 +34,22 @@ export default function Index() {
       height: '88px',
       alignItems: 'center',
       justifyContent: 'center',
-      display: 'flex'
+      display: 'flex',
+      [theme.breakpoints.between("sm", "lg")]: {
+        width: '5.5vw',
+        height: '7.33vw'
+      },
+      [theme.breakpoints.down("sm")]: {
+        width: '33px',
+        height: '44px'
+      }
     },
     riichi: {
       width: '20em',
       height: '1.333em',
       borderRadius: '0.667em',
-      background: '#ffffff'
+      background: '#ffffff',
+      opacity: riichiDeclared > 0 ? 1 : 0.6
     },
     emptyTile: {
       background: `url("/tiles/empty.svg") no-repeat`,
@@ -48,15 +61,9 @@ export default function Index() {
 
   const addTileFront = ({ src, alt }) => (
     <Box key={src} sx={styles.tileBackground}>
-      <img height="66px" src={src} alt={alt} />
+      <img height="75%" src={src} alt={alt} />
     </Box>
   );
-
-  const overlapImg = (
-    <Box sx={styles.tileBackground}>
-      <img height="66px" src="/tiles/ton.svg" />
-    </Box>
-  )
 
   const emptyTile = (
     <Box sx={[styles.tileBackground, styles.emptyTile]}>
@@ -68,134 +75,129 @@ export default function Index() {
     </Box>
   );
 
+  const nextEmptySelection = () => {
+    if (selectedIndex === 2 && dora.length < 8) return;
+    if (selectedIndex === 3 && hand.filter(tile => tile === null).length > 0) return;
+    if (selectedIndex === 3 && hand.filter(tile => tile === null).length === 0 && winningTile === null) {
+      setSelectedIndex(4);
+      return;
+    }
+
+    if (seatWind === null) {
+      setSelectedIndex(0);
+    } else if (roundWind === null) {
+      setSelectedIndex(1);
+    } else if (dora.length === 0) {
+      setSelectedIndex(2);
+    } else if (hand.filter(tile => tile === null).length > 0) {
+      setSelectedIndex(3);
+    } else if (winningTile === null) {
+      setSelectedIndex(4);
+    } else {
+      setSelectedIndex(5);
+    }
+  }
+
   const onSelectionTileClick = (tile) => {
     switch (selectedIndex) {
       case 0:
         setSeatWind(tile);
-        if (roundWind === null) {
-          setSelectedIndex(1);
-        } else if (dora.length < 8) {
-          setSelectedIndex(2);
-        } else if (hand.filter(tile => tile === null).length > 0) {
-          setSelectedIndex(3);
-        } else {
-          setSelectedIndex(4);
-        }
         break;
       case 1:
         setRoundWind(tile);
-        if (dora.length < 8) {
-          setSelectedIndex(2);
-        } else if (hand.filter(tile => tile === null).length > 0) {
-          setSelectedIndex(3);
-        } else if (winningTile === null) {
-          setSelectedIndex(4);
-        } else {
-          setSelectedIndex(5);
-        }
         break;
       case 2:
         if (dora.length < 8) {
-          if (dora.length === 7 && hand.filter(tile => tile === null).length > 0) {
-            setSelectedIndex(3);
-          }
           setDora([...dora, tile]);
-        } else if (hand.filter(tile => tile === null).length > 0) {
-          setSelectedIndex(3);
-        } else if (winningTile === null) {
-          setSelectedIndex(4);
-        } else {
-          setSelectedIndex(5);
         }
         break;
       case 3:
         if (hand.filter(tile => tile === null).length > 0) {
-          if (hand.filter(tile => tile === null).length === 1) {
-            if (winningTile === null) {
-              setSelectedIndex(4);
-            } else {
-              setSelectedIndex(5);
-            }
-          }
           let index = hand.indexOf(null);
           const sorted = [...hand.slice(0, index), tile, ...hand.splice(index + 1)].sort((a, b) => (b?.key < (a?.key ?? String.fromCodePoint(0x10ffff))) ? 1 : -1);
           setHand(sorted);
-
-        } else if (winningTile === null) {
-          setSelectedIndex(4);
-        } else {
-          setSelectedIndex(5);
         }
         break;
       case 4:
         setWinningTile(tile);
-        setSelectedIndex(5);
         break;
       default:
         break;
     }
   }
 
-  // use useEffect to update the ui with selected tile box, if selected === 2, delete dora clicked on and set selected to last tile
-
   useEffect(() => {
     console.log(selectedIndex);
-    // also use this to set the disabled prop for selectionTile button
-    switch (selectedIndex) {
-      case 0:
-        break;
-      case 1:
-        break;
-      case 2:
-        break;
-      default:
-        break;
-    }
-  }, [selectedIndex])
+    nextEmptySelection();
+  }, [seatWind, roundWind, dora, hand, winningTile])
 
   const selectionTiles = (
-    <React.Fragment>
-      <Grid item container direction="column" spacing={1}>
-        {suits.map((suit, index) => (
-          <Grid key={`${suit}${index}`} item container direction="row" spacing={1} justifyContent="center">
-            {[1, 2, 3, 4, 5, 5, 6, 7, 8, 9].map((value, i) => (
-              <Grid item key={`${value}${i}`}>
-                <Button disabled={selectedIndex <= 1} sx={{ padding: 0, opacity: selectedIndex <= 1 ? 0.7 : 1 }} onClick={() => onSelectionTileClick(i === 5 ? addTileFront(getSuitTiles(suit, value, true)) : addTileFront(getSuitTiles(suit, value)))}>
-                  {i === 5 ? addTileFront(getSuitTiles(suit, value, true)) : addTileFront(getSuitTiles(suit, value))}
-                </Button>
-              </Grid>
-            ))}
-          </Grid>
-        ))}
-        <Grid item container direction="row" spacing={1} justifyContent="center">
-          {honors.map((tile, index) => (
-            <Grid item key={`${tile}${index}`}>
-              <Button disabled={selectedIndex <= 1 && (tile[0] === 'g' || tile[0] === 'r' || tile[1] === 'h')} sx={{ padding: 0, opacity: selectedIndex <= 1 && (tile[0] === 'g' || tile[0] === 'r' || tile[1] === 'h') ? 0.7 : 1 }} onClick={() => onSelectionTileClick(addTileFront(getHonorTiles(tile)))}>
-                {addTileFront(getHonorTiles(tile))}
+    <Grid item container direction="column" spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1} sx={{ mb: 4 }}>
+      {suits.map((suit, index) => (
+        <Grid key={`${suit}${index}`} item container direction="row" spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1} justifyContent="center">
+          {[1, 2, 3, 4, 5, 5, 6, 7, 8, 9].map((value, i) => (
+            <Grid item key={`${value}${i}`}>
+              <Button
+                disabled={
+                  selectedIndex <= 1 || selectedIndex === 5
+                }
+                sx={{
+                  padding: 0,
+                  minWidth: 0,
+                  opacity: selectedIndex <= 1 || selectedIndex === 5 ? 0.6 : 1,
+                }}
+                /* change onClick to send {suit: "", value: #} of tile instead of actual react tile component */
+                onClick={
+                  () => onSelectionTileClick(i === 4 ? addTileFront(getSuitTiles(suit, value, true)) : addTileFront(getSuitTiles(suit, value)))
+                }
+              >
+                {i === 4 ? addTileFront(getSuitTiles(suit, value, true)) : addTileFront(getSuitTiles(suit, value))}
               </Button>
             </Grid>
           ))}
         </Grid>
+      ))}
+      <Grid item container direction="row" spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1} justifyContent="center">
+        {honors.map((tile, index) => (
+          <Grid item key={`${tile}${index}`}>
+            <Button
+              disabled={
+                selectedIndex <= 1 && (tile[0] === 'g' || tile[0] === 'r' || tile[1] === 'h') || selectedIndex === 5
+              }
+              sx={{
+                padding: 0,
+                minWidth: 0,
+                opacity: selectedIndex <= 1 && (tile[0] === 'g' || tile[0] === 'r' || tile[1] === 'h') || selectedIndex === 5 ? 0.6 : 1
+              }}
+              /* change onClick to send {honor: "name"} of tile instead of actual react tile component */
+              onClick={() => onSelectionTileClick(addTileFront(getHonorTiles(tile)))}
+            >
+              {addTileFront(getHonorTiles(tile))}
+            </Button>
+          </Grid>
+        ))}
       </Grid>
-    </React.Fragment>
+    </Grid>
   )
 
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
         <Grid container direction="column">
+
+          {/*-----Seat, Round, Dora-----*/}
           <Grid item container direction="row" justifyContent="space-between">
             <Grid item>
-              <Grid item container direction="row" spacing={4}>
+              <Grid item container direction="row" spacing={matchesLG ? matchesSM ? 2 : 2 : 4}>
                 <Grid item container direction="column" align="center" xs>
-                  <Typography variant="h2" sx={{ mb: 2 }}>Seat</Typography>
-                  <Button sx={{ padding: 0 }} onClick={() => { setSeatWind(null); setSelectedIndex(0); }}>
+                  <Typography variant="h1" sx={{ mb: 2 }}>Seat</Typography>
+                  <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { setSeatWind(null); setSelectedIndex(0); }}>
                     {seatWind === null ? selectedIndex === 0 ? selectedEmptyTile : emptyTile : seatWind}
                   </Button>
                 </Grid>
                 <Grid item container direction="column" align="center" xs>
-                  <Typography variant="h2" sx={{ mb: 2 }}>Round</Typography>
-                  <Button sx={{ padding: 0 }} onClick={() => { setRoundWind(null); setSelectedIndex(1); }}>
+                  <Typography variant="h1" sx={{ mb: 2 }}>Round</Typography>
+                  <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { setRoundWind(null); setSelectedIndex(1); }}>
                     {roundWind === null ? selectedIndex === 1 ? selectedEmptyTile : emptyTile : roundWind}
                   </Button>
                 </Grid>
@@ -203,18 +205,18 @@ export default function Index() {
             </Grid>
             <Grid item>
               <Grid item container direction="column">
-                <Typography variant="h2" align="center" sx={{ mb: 2 }}>Dora/Uradora</Typography>
-                <Grid item container direction="row" spacing={1} justifyContent="center">
+                <Typography variant="h1" align="center" sx={{ mb: 2 }}>Dora/Uradora</Typography>
+                <Grid item container direction="row" spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1} justifyContent="center">
                   {dora.map((tile, index) => (
                     <Grid item key={`${tile}${index}`}>
-                      <Button sx={{ padding: 0 }} onClick={() => { setSelectedIndex(2); setDora(dora.filter((_, i) => i !== index)) }}>
+                      <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { setSelectedIndex(2); setDora(dora.filter((_, i) => i !== index)) }}>
                         {tile}
                       </Button>
                     </Grid>
                   ))}
                   {dora.length === 8 ? null :
                     <Grid item>
-                      <Button sx={{ padding: 0 }} onClick={() => setSelectedIndex(2)}>
+                      <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => setSelectedIndex(2)}>
                         {selectedIndex === 2 ? selectedEmptyTile : emptyTile}
                       </Button>
                     </Grid>
@@ -223,29 +225,65 @@ export default function Index() {
               </Grid>
             </Grid>
           </Grid>
+
+          {/*-----Hand-----*/}
           <Grid item sx={{ mt: 8, mb: 4 }}>
             <Typography variant="h1" align="center">Hand</Typography>
           </Grid>
-          <Grid item container spacing={1}>
+          <Grid item container spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1}>
             {hand.map((tile, index) => (
-              <Grid item key={`${tile}${index}`} sx={{ ml: index === 13 & !matchesMD ? 'auto' : undefined }}>
-                <Button sx={{ padding: 0 }} onClick={() => { setSelectedIndex(3); setHand([...hand.filter((_, i) => i !== index), null]) }}>
+              <Grid item key={`${tile}${index}`}>
+                <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { setSelectedIndex(3); setHand([...hand.filter((_, i) => i !== index), null]) }}>
                   {tile === null ? selectedIndex === 3 && hand.filter(t => t !== null).length === index ? selectedEmptyTile : emptyTile : tile}
                 </Button>
               </Grid>
             ))}
-            <Grid item sx={{ ml: matchesMD ? undefined : 'auto' }}>
-              <Button sx={{ padding: 0 }} onClick={() => { setWinningTile(null); setSelectedIndex(4);}}>
+            <Grid item sx={{ ml: matchesSM ? undefined : 'auto' }}>
+              <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { setWinningTile(null); setSelectedIndex(4); }}>
                 {winningTile === null ? selectedIndex === 4 ? selectedEmptyTile : emptyTile : winningTile}
               </Button>
             </Grid>
           </Grid>
+
+          {/*-----Riichi-----*/}
           <Grid item sx={{ my: 4 }} align="center">
-            <Box sx={styles.riichi}>
-              <Typography variant="h1" align="center" sx={{ color: '#e31a1c', fontSize: '2rem', lineHeight: '0.667em' }}>•</Typography>
-            </Box>
+            <Button sx={{ padding: 0 }} onClick={() => setRiichiDeclared((riichiDeclared + 1) % 3)} disableRipple>
+              <Grid sx={styles.riichi} container direction="row" alignItems="center">
+                <Box sx={{
+                  height: "7px",
+                  width: "7px",
+                  backgroundColor: "#e31a1c",
+                  borderRadius: "50%",
+                  ml: "50%",
+                  transform: "translateX(-3.5px)"
+                }}></Box>
+                <Typography variant='small' sx={{ textTransform: "none" }}>{riichiDeclared === 2 ? "x2" : ''}</Typography>
+              </Grid>
+
+            </Button>
           </Grid>
+
+          {/*-----Selection Tiles-----*/}
           {selectionTiles}
+
+          {/*-----Clear Buttons-----*/}
+          <Grid item container justifyContent="center" spacing={3}>
+            <Grid item>
+              <Button variant="contained" onClick={() => { setDora([]) }} sx={{ width: matchesMD ? "8em" : "10em" }}>
+                <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>Clear Dora</Typography>
+              </Button>
+            </Grid>
+            <Grid item>
+              <Button variant="contained" onClick={() => { setHand(hand.map(_ => null)), setWinningTile(null) }} sx={{ width: matchesMD ? "8em" : "10em" }}>
+                <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>Clear Hand</Typography>
+              </Button>
+            </Grid>
+            <Grid item>
+              <Button variant="contained" onClick={() => { setSeatWind(null), setRoundWind(null), setDora([]), setHand(hand.map(_ => null)), setWinningTile(null) }} sx={{ width: matchesMD ? "8em" : "10em" }}>
+                <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>Clear All</Typography>
+              </Button>
+            </Grid>
+          </Grid>
         </Grid>
       </Box>
     </Container>

@@ -22,24 +22,16 @@ const theme = createTheme({
     tab: {
       textTransform: "none",
       fontSize: "1rem",
-      color: "#C0C0C0"
+      color: "#C0C0C0",
+      fontWeight: 300
     },
     h1: {
-      fontSize: '1.5rem',
-      color: white
-    },
-    h2: {
       fontSize: '1.25rem',
-      color: white
-    }
-  },
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 600,
-      md: 1076,
-      lg: 1200,
-      xl: 1536,
+      color: white,
+      textTransform: 'none'
+    },
+    small: {
+      fontSize: '0.55rem'
     }
   }
 });

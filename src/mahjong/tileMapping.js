@@ -1,7 +1,5 @@
 const dragonTilesMapping = { "green": "zhatsu", "red": "zhun", "white": "zhaku" }
 const windTilesMapping = { "east": "y1ton", "south": "y2nan", "west": "y3shaa", "north": "y4pei" }
-export const suits = ["man", "pin", "sou"];
-export const honors = ["east", "south", "west", "north", "white", "green", "red"];
 
 export const getSuitTiles = (suit, number, dora = false) => (
   {
