@@ -30,7 +30,7 @@ const theme = createTheme({
       color: white,
       textTransform: 'none'
     },
-    small: {
+    subtitle1: {
       fontSize: '0.55rem'
     }
   }
