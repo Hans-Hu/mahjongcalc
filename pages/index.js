@@ -5,8 +5,14 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from "@mui/material/styles";
-import { suits, getTile } from '../src/mahjong/tileMapping';
+import { getTile, handToRiichiString } from '../src/mahjong/tileMapping';
 import Button from '@mui/material/Button';
+import { Dialog, DialogContent } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import Hidden from '@mui/material/Hidden';
+
+const Riichi = require('riichi');
 
 export default function Index() {
   const theme = useTheme();
@@ -20,10 +26,14 @@ export default function Index() {
   const [hand, setHand] = useState(Array(13).fill(null));
   const [winningTile, setWinningTile] = useState(null);
   const [riichiDeclared, setRiichiDeclared] = useState(1); // 0 - no riichi, 1 - riichi, 2 - double riichi
-
   const [selectedIndex, setSelectedIndex] = useState(0); // 0 - seat, 1 - round, 2 - dora, 3 - hand
-
   const [tilesUsed, setTilesUsed] = useState({});
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [yakus, setYakus] = useState({});
+
+  const [winButtonDisabled, setWinButtonDisabled] = useState(true);
 
   const styles = {
     tileBackground: {
@@ -59,7 +69,7 @@ export default function Index() {
   };
 
   const generateTile = ({ suitIndex, number, dora = false }) => (
-    addTileFront(getTile(suits[suitIndex], number, dora))
+    addTileFront(getTile(suitIndex, number, dora))
   );
 
   const addTileFront = ({ src, alt }) => (
@@ -117,7 +127,6 @@ export default function Index() {
         updatedTilesUsed = { ...updatedTilesUsed, [tileKey]: 1 };
       }
     });
-    console.log(updatedTilesUsed);
     setTilesUsed(updatedTilesUsed);
   }
 
@@ -155,9 +164,33 @@ export default function Index() {
   }
 
   useEffect(() => {
-    console.log(selectedIndex);
     nextEmptySelection();
+    if (seatWind !== null && roundWind !== null & doraIndicators.length > 0 && hand.filter(tile => tile === null).length === 0 && winningTile !== null) {
+      const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, winningTile, "ron");
+      const riichi = new Riichi(riichiString);
+      const result = riichi.calc();
+
+      if (result.isAgari) {
+        setWinButtonDisabled(false);
+      } else {
+        setWinButtonDisabled(true);
+        //show invalid hand message on ron/tsumo button aria label/tip
+      }
+    } else {
+      setWinButtonDisabled(true);
+    }
   }, [seatWind, roundWind, doraIndicators, hand, winningTile])
+
+  const onWinButtonClick = (winningType) => {
+    const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, winningTile, winningType);
+    const riichi = new Riichi(riichiString);
+    const result = riichi.calc();
+    console.log(result);
+
+    setDialogMessage(result.text.slice(result.text.indexOf(' ') + 1));
+    setYakus(result.yaku);
+    setDialogOpen(true);
+  }
 
   const tileDisabled = (index, i) => {
     if (index < 3 && i === 4 && tilesUsed[`${index},${i}`] >= 1) {
@@ -175,7 +208,7 @@ export default function Index() {
     <Grid item container direction="column" spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1} sx={{ mb: matchesSM ? 3 : 4 }}>
       {Array(4).fill().map((_, index) => (
         <Grid key={`${index}`} item container direction="row" spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1} justifyContent="center">
-          {(index === 3 ? Array(7).fill().map((_, i) => i) : [1, 2, 3, 4, 5, 5, 6, 7, 8, 9]).map((number, i) => (
+          {(index === 3 ? Array(7).fill().map((_, i) => i + 1) : [1, 2, 3, 4, 5, 5, 6, 7, 8, 9]).map((number, i) => (
             <Grid item key={`${number}${i}`}>
               <Button
                 disabled={
@@ -191,7 +224,7 @@ export default function Index() {
                   suitIndex: index,
                   index: i,
                   number: number,
-                  dora: i === 4,
+                  dora: index < 3 && i === 4,
                   sortIndex: index * 10 + i
                 })}
               >
@@ -212,7 +245,7 @@ export default function Index() {
           {/*-----Seat, Round, Dora-----*/}
           <Grid item container direction={matchesSM ? "column" : "row"} justifyContent={matchesSM ? "center" : "space-between"}>
             <Grid item>
-              <Grid item container direction="row" spacing={matchesLG ? matchesSM ? 0 : 2 : 4} sx={{width: matchesSM ? "8em" : undefined, mx: matchesSM ? "auto" : undefined}}>
+              <Grid item container direction="row" spacing={matchesLG ? matchesSM ? 0 : 2 : 4} sx={{ width: matchesSM ? "8em" : undefined, mx: matchesSM ? "auto" : undefined }}>
                 <Grid item container direction="column" align="center" xs>
                   <Typography variant="h1" sx={{ mb: 2 }}>Seat</Typography>
                   <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { setSeatWind(null); setSelectedIndex(0); }}>
@@ -290,8 +323,22 @@ export default function Index() {
           {/*-----Selection Tiles-----*/}
           {selectionTiles}
 
-          {/*-----Clear Buttons-----*/}
+          {/*-----Ron/Tsumo Buttons-----*/}
           <Grid item container justifyContent="center" spacing={3}>
+            <Grid item>
+              <Button disabled={winButtonDisabled} variant="contained" onClick={() => onWinButtonClick("ron")} sx={{ width: matchesMD ? "8em" : "10em" }}>
+                <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: winButtonDisabled ? 0.7 : 1 }}>Ron</Typography>
+              </Button>
+            </Grid>
+            <Grid item>
+              <Button disabled={winButtonDisabled} variant="contained" onClick={() => onWinButtonClick("tsumo")} sx={{ width: matchesMD ? "8em" : "10em" }}>
+                <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: winButtonDisabled ? 0.7 : 1 }}>Tsumo</Typography>
+              </Button>
+            </Grid>
+          </Grid>
+
+          {/*-----Clear Buttons-----*/}
+          <Grid item container justifyContent="center" spacing={3} sx={{ my: matchesSM ? 0 : 2 }}>
             <Grid item>
               <Button variant="contained" onClick={() => { updateTilesUsed(doraIndicators, true); setDoraIndicators([]); setSelectedIndex(2); }} sx={{ width: matchesMD ? "8em" : "10em" }}>
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>Clear Dora</Typography>
@@ -309,6 +356,44 @@ export default function Index() {
             </Grid>
           </Grid>
         </Grid>
+
+        <Dialog sx={{ zIndex: 1302 }} open={dialogOpen} fullScreen={matchesSM} onClose={() => setDialogOpen(false)} PaperProps={{ sx: { backgroundColor: theme.palette.background.default } }}>
+          <DialogContent onClick={() => matchesSM ? setDialogOpen(false) : undefined}>
+            <Hidden smUp>
+              <IconButton
+                aria-label="close"
+                onClick={() => setDialogOpen(false)}
+                sx={{
+                  position: 'absolute',
+                  right: 8,
+                  top: 8,
+                  color: theme.palette.text.primary
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Hidden>
+            <Grid container direction="column" sx={{ width: matchesSM ? undefined : "21em", height: matchesSM ? "100%" : undefined }} alignItems="center" justifyContent={matchesSM ? "center" : undefined}>
+              <Grid item sx={{ mt: 2, mb: 4 }}>
+                <Typography variant='h1' sx={{fontSize: "1.6rem"}} align='center'>
+                  {dialogMessage}
+                </Typography>
+              </Grid>
+              <Grid item container direction="column" sx={{ px: 2, mb: 2 }} spacing={0.2}>
+                {Object.entries(yakus).map(([name, value], index) => (
+                  <Grid item container key={`${name}${value}${index}`} justifyContent="space-between">
+                    <Grid item>
+                      <Typography variant='h1'>{name}</Typography>
+                    </Grid>
+                    <Grid item>
+                      <Typography variant='h1'>{value}</Typography>
+                    </Grid>
+                  </Grid>
+                ))}
+              </Grid>
+            </Grid>
+          </DialogContent>
+        </Dialog>
       </Box>
     </Container>
   );

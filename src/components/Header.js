@@ -98,7 +98,7 @@ export default function Header(props) {
           </ListItem>
         </List>
       </SwipeableDrawer>
-      <IconButton sx={{ ml: "auto" }} onClick={() => setOpenDrawer(!openDrawer)} disableRipple>
+      <IconButton sx={{ ml: "auto", mr: "-8px" }} onClick={() => setOpenDrawer(!openDrawer)} disableRipple>
         <MenuIcon color='secondary' />
       </IconButton>
     </React.Fragment>

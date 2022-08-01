@@ -20,7 +20,8 @@
     "prop-types": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-transition-group": "^4.4.4"
+    "react-transition-group": "^4.4.4",
+    "riichi": "^1.2.0"
   },
   "devDependencies": {
     "eslint": "latest",
