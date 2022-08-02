@@ -18,6 +18,14 @@ export default class MyDocument extends Document {
           />
           <meta name="emotion-insertion-point" content="" />
           {this.props.emotionStyleTags}
+          <style>{`
+            #__next {
+              display: flex;
+              flex-direction: column;
+              height: 100vh;
+            }
+          `}
+          </style>
         </Head>
         <body>
           <Main />

@@ -16,7 +16,8 @@ export default function Trainer() {
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
-        <Grid container direction="column">
+        <Typography variant="h1">TBA</Typography>
+        {/*<Grid container direction="column">
           <Grid item container direction="row" justifyContent="space-between">
             <Grid item>
               <Grid item container direction="row" spacing={matchesLG ? matchesSM ? 2 : 2 : 4}>
@@ -37,6 +38,7 @@ export default function Trainer() {
             </Grid>
           </Grid>
         </Grid>
+        */}
       </Box>
     </Container>
   )

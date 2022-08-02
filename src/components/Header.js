@@ -40,7 +40,7 @@ ElevationScroll.propTypes = {
   window: PropTypes.func,
 };
 
-export default function Header(props) {
+export default function Header() {
   const theme = useTheme();
   const [value, setValue] = useState(0);
   const matchesSM = useMediaQuery(theme.breakpoints.down("sm"));
@@ -64,14 +64,6 @@ export default function Header(props) {
   const handleChange = (e, newValue) => {
     setValue(newValue);
   };
-
-  const tabs = (
-    <Tabs value={value} onChange={handleChange} sx={styles.tabContainer} indicatorColor='primary' textColor='secondary'>
-      <Tab disableRipple component={Link} sx={styles.tab} href='/' label='Calculator' />
-      <Tab disableRipple component={Link} sx={styles.tab} href='/trainer' label='Trainer' />
-    </Tabs>
-  )
-
   useEffect(() => {
     switch (window.location.pathname) {
       case "/":
@@ -85,6 +77,12 @@ export default function Header(props) {
     }
   }, [])
 
+  const tabs = (
+    <Tabs value={value} onChange={handleChange} sx={styles.tabContainer} indicatorColor='primary' textColor='secondary'>
+      <Tab disableRipple component={Link} sx={styles.tab} href='/' label='Calculator' />
+      <Tab disableRipple component={Link} sx={styles.tab} href='/trainer' label='Trainer' />
+    </Tabs>
+  );
 
   const drawer = (
     <React.Fragment>
@@ -102,7 +100,7 @@ export default function Header(props) {
         <MenuIcon color='secondary' />
       </IconButton>
     </React.Fragment>
-  )
+  );
 
   return (
     <React.Fragment>

@@ -375,7 +375,7 @@ export default function Index() {
             </Hidden>
             <Grid container direction="column" sx={{ width: matchesSM ? undefined : "21em", height: matchesSM ? "100%" : undefined }} alignItems="center" justifyContent={matchesSM ? "center" : undefined}>
               <Grid item sx={{ mt: 2, mb: 4 }}>
-                <Typography variant='h1' sx={{fontSize: "1.6rem"}} align='center'>
+                <Typography variant='h1' sx={{ fontSize: "1.6rem" }} align='center'>
                   {dialogMessage}
                 </Typography>
               </Grid>
