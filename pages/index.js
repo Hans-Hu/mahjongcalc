@@ -11,6 +11,7 @@ import { Dialog, DialogContent } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Hidden from '@mui/material/Hidden';
+import Head from 'next/head';
 
 const Riichi = require('riichi');
 
@@ -239,6 +240,13 @@ export default function Index() {
 
   return (
     <Container maxWidth="lg">
+      <Head>
+        <title key="title">Riichi Mahjong Score Calculator</title>
+        <meta name="description" key="description" content="Simple online calculator for Japanese Riichi Mahjong. Accurately calculates the score and yakus of a hand." />
+        <meta property="og:title" content="Riichi Mahjong Score Calculator" key="og:title" />
+        <meta property="og:url" content="mahjongscore.com" key="og:url" />
+        <link rel="canonical" key="canonical" href="https://mahjongscore.com" />
+      </Head>
       <Box sx={{ my: matchesSM ? 2 : 4 }}>
         <Grid container direction="column">
 

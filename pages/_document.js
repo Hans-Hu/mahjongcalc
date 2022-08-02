@@ -9,9 +9,15 @@ export default class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
+        <link rel="icon" href="/favicon.png" />
           {/* PWA primary color */}
           <meta name="theme-color" content={theme.palette.primary.main} />
-          <link rel="shortcut icon" href="/static/favicon.ico" />
+          <meta property="og:type" content="website" />
+          <meta property="og:image" content="https://i.imgur.com/yYUVLtA.png" />
+          <meta property="og:image:type" content="image/png" />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content="site preview" />
           <link
             rel="stylesheet"
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"

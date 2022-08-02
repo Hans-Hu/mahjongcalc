@@ -9,7 +9,7 @@ export default function Footer() {
     <footer style={{marginTop: "auto"}}>
       <Box>
         <Container maxWidth="lg">
-          <Typography variant='subtitle1' align="center" sx={{mb: 1, color: "#A0A0A0"}}>
+          <Typography variant='subtitle1' align="center" sx={{mb: 1, color: "#707070"}}>
             {`Copyright © ${new Date().getFullYear()} mahjongscore.com | `}
             <MuiLink href="https://github.com/Hans-Hu/mahjongscore" target="_blank" color="inherit">GitHub</MuiLink>
           </Typography>
