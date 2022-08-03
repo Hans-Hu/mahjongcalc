@@ -17,12 +17,15 @@
     "@emotion/styled": "latest",
     "@mui/icons-material": "latest",
     "@mui/material": "latest",
+    "agari": "^1.1.0",
+    "assert": "^2.0.0",
+    "fs-extra": "^10.1.0",
     "next": "latest",
     "prop-types": "latest",
     "react": "latest",
     "react-dom": "latest",
     "react-transition-group": "^4.4.4",
-    "riichi": "^1.2.0"
+    "syanten": "^1.5.0"
   },
   "devDependencies": {
     "eslint": "latest",

@@ -12,8 +12,7 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Hidden from '@mui/material/Hidden';
 import Head from 'next/head';
-
-const Riichi = require('riichi');
+import Riichi from '../src/mahjong/riichi';
 
 export default function Index() {
   const theme = useTheme();
@@ -31,7 +30,9 @@ export default function Index() {
   const [tilesUsed, setTilesUsed] = useState({});
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMessage, setDialogMessage] = useState("");
+  const [scoreMessage, setScoreMessage] = useState("");
+  const [scoreName, setScoreName] = useState("");
+  const [miniPointsMessage, setMiniPointsMessage] = useState("");
   const [yakus, setYakus] = useState({});
 
   const [winButtonDisabled, setWinButtonDisabled] = useState(true);
@@ -167,6 +168,7 @@ export default function Index() {
   useEffect(() => {
     nextEmptySelection();
     if (seatWind !== null && roundWind !== null & doraIndicators.length > 0 && hand.filter(tile => tile === null).length === 0 && winningTile !== null) {
+      // modify handToRiichiString for calls
       const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, winningTile, "ron");
       const riichi = new Riichi(riichiString);
       const result = riichi.calc();
@@ -188,7 +190,15 @@ export default function Index() {
     const result = riichi.calc();
     console.log(result);
 
-    setDialogMessage(result.text.slice(result.text.indexOf(' ') + 1));
+    setScoreName(result.name)
+    setScoreMessage(`${result.ten} Points` + (winningType === "tsumo" ? seatWind.number === 1 ? ` (${result.oya[0]} all)` : ` (${Math.max(...result.ko)} / ${Math.min(...result.ko)})` : ""));
+    if (result.fu !== 0) {
+      setMiniPointsMessage(`${result.fu} Fu / ${result.han} Han`);
+    } else {
+      setMiniPointsMessage("");
+    }
+    console.log(result.name);
+    //setDialogMessage(result.text.slice(result.text.indexOf(' ') + 1));
     setYakus(result.yaku);
     setDialogOpen(true);
   }
@@ -381,24 +391,44 @@ export default function Index() {
                 <CloseIcon />
               </IconButton>
             </Hidden>
-            <Grid container direction="column" sx={{ width: matchesSM ? undefined : "21em", height: matchesSM ? "100%" : undefined }} alignItems="center" justifyContent={matchesSM ? "center" : undefined}>
-              <Grid item sx={{ mt: 2, mb: 4 }}>
-                <Typography variant='h1' sx={{ fontSize: "1.6rem" }} align='center'>
-                  {dialogMessage}
-                </Typography>
-              </Grid>
-              <Grid item container direction="column" sx={{ px: 2, mb: 2 }} spacing={0.2}>
-                {Object.entries(yakus).map(([name, value], index) => (
-                  <Grid item container key={`${name}${value}${index}`} justifyContent="space-between">
-                    <Grid item>
-                      <Typography variant='h1'>{name}</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Typography variant='h1'>{value}</Typography>
-                    </Grid>
+            <Grid container direction="column" sx={{ width: matchesSM ? undefined : "25em", height: matchesSM ? "100%" : undefined }} alignItems="center" justifyContent={matchesSM ? "center" : undefined}>
+              {Object.keys(yakus).length === 0 ?
+                <Grid item sx={{ mt: 2, mb: 2 }}>
+                  <Typography variant='h1' sx={{ fontSize: "1.6rem" }} align='center'>
+                    No Yaku
+                  </Typography>
+                </Grid> :
+                <React.Fragment>
+                  <Grid item sx={{ mt: 2, mb: 1 }}>
+                    <Typography variant='h1' sx={{ fontSize: "1.8rem", fontWeight: 400 }} align='center'>
+                      {scoreName}
+                    </Typography>
                   </Grid>
-                ))}
-              </Grid>
+                  <Grid item>
+                    <Typography variant='h1' sx={{ fontSize: "1.6rem" }} align='center'>
+                      {scoreMessage}
+                    </Typography>
+                  </Grid>
+                  <Grid item sx={{ mt: 1, mb: 4 }}>
+                    <Typography variant='h1' align='center'>
+                      {miniPointsMessage}
+                    </Typography>
+                  </Grid>
+                  <Grid item container direction="column" sx={{ px: 2, mb: 2 }} spacing={0.3}>
+                    {Object.entries(yakus).map(([name, value], index) => (
+                      <Grid item container key={`${name}${value}${index}`} justifyContent="space-between">
+                        <Grid item>
+                          <Typography variant='h1'>{name}</Typography>
+                        </Grid>
+                        <Grid item>
+                          <Typography variant='h1'>{value}</Typography>
+                        </Grid>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </React.Fragment>
+              }
+
             </Grid>
           </DialogContent>
         </Dialog>
