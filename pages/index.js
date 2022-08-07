@@ -188,7 +188,6 @@ export default function Index() {
     const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, winningTile, winningType);
     const riichi = new Riichi(riichiString);
     const result = riichi.calc();
-    console.log(result);
 
     setScoreName(result.name)
     setScoreMessage(`${result.ten} Points` + (winningType === "tsumo" ? seatWind.number === 1 ? ` (${result.oya[0]} all)` : ` (${Math.max(...result.ko)} / ${Math.min(...result.ko)})` : ""));
@@ -197,8 +196,6 @@ export default function Index() {
     } else {
       setMiniPointsMessage("");
     }
-    console.log(result.name);
-    //setDialogMessage(result.text.slice(result.text.indexOf(' ') + 1));
     setYakus(result.yaku);
     setDialogOpen(true);
   }
