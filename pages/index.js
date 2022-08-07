@@ -13,6 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Hidden from '@mui/material/Hidden';
 import Head from 'next/head';
 import Riichi from '../src/mahjong/riichi';
+import { cloneDeep } from 'lodash';
 
 export default function Index() {
   const theme = useTheme();
@@ -24,6 +25,7 @@ export default function Index() {
   const [roundWind, setRoundWind] = useState(null);
   const [doraIndicators, setDoraIndicators] = useState([]);
   const [hand, setHand] = useState(Array(13).fill(null));
+  const [calledTiles, setCalledTiles] = useState([]);
   const [winningTile, setWinningTile] = useState(null);
   const [riichiDeclared, setRiichiDeclared] = useState(1); // 0 - no riichi, 1 - riichi, 2 - double riichi
   const [selectedIndex, setSelectedIndex] = useState(0); // 0 - seat, 1 - round, 2 - dora, 3 - hand
@@ -36,6 +38,9 @@ export default function Index() {
   const [yakus, setYakus] = useState({});
 
   const [winButtonDisabled, setWinButtonDisabled] = useState(true);
+
+  const [callSelected, setCallSelected] = useState(0); // 0 - none, 1 - chi, 2 - pon, 3 - kan, 4 - ankan
+  const [akaChi, setAkaChi] = useState(false);
 
   const styles = {
     tileBackground: {
@@ -55,6 +60,9 @@ export default function Index() {
         height: '44px'
       }
     },
+    tileBack: {
+      filter: "brightness(0%) invert(81%) sepia(62%) saturate(1671%) hue-rotate(356deg) brightness(101%) contrast(91%)"
+    },
     riichi: {
       width: '20em',
       height: '1.333em',
@@ -67,11 +75,15 @@ export default function Index() {
     },
     selectedTile: {
       filter: "invert(48%) sepia(86%) saturate(359%) hue-rotate(84deg) brightness(94%) contrast(91%)"
+    },
+    button: {
+      width: matchesMD ? "8em" : "10em",
+      "&:hover": { backgroundColor: "#535A64" }
     }
   };
 
-  const generateTile = ({ suitIndex, number, dora = false }) => (
-    addTileFront(getTile(suitIndex, number, dora))
+  const generateTile = ({ suitIndex, number, dora = false, showBack = false }) => (
+    showBack ? tileBack : addTileFront(getTile(suitIndex, number, dora))
   );
 
   const addTileFront = ({ src, alt }) => (
@@ -82,6 +94,11 @@ export default function Index() {
 
   const emptyTile = (
     <Box sx={[styles.tileBackground, styles.emptyTile]}>
+    </Box>
+  );
+
+  const tileBack = (
+    <Box sx={[styles.tileBackground, styles.tileBack]}>
     </Box>
   );
 
@@ -132,7 +149,42 @@ export default function Index() {
     setTilesUsed(updatedTilesUsed);
   }
 
-  const onSelectionTileClick = (tile) => {
+  const handleTileCalls = (tile) => {
+    setHand(hand.slice(0, hand.length - 3));
+    switch (callSelected) {
+      case 1:
+        let startingNumber = tile.number;
+        if (tile.number >= 7) {
+          startingNumber = 7;
+        }
+        let tileSet = [];
+        for (let number = startingNumber; number <= startingNumber + 2; number++) {
+          tileSet.push({ ...tile, number: number, dora: number === 5 ? akaChi ? true : tile.dora : false })
+        }
+        setCalledTiles(cloneDeep([...calledTiles, tileSet]));
+        //updateTilesUsed
+        setRiichiDeclared(0);
+        break;
+      case 2:
+        setCalledTiles(cloneDeep([...calledTiles, Array(3).fill(tile)]))
+        //updateTilesUsed
+        setRiichiDeclared(0);
+        break;
+      case 3:
+        setCalledTiles(cloneDeep([...calledTiles, Array(4).fill(tile)]))
+        //updateTilesUsed
+        setRiichiDeclared(0);
+        break;
+      case 4:
+        setCalledTiles(cloneDeep([...calledTiles, [{ ...tile, showBack: true }, tile, tile, { ...tile, showBack: true }]]));
+        //updateTilesUsed
+        break;
+      default:
+        break;
+    }
+  }
+
+  const handleSelectionTileClick = (tile) => {
     switch (selectedIndex) {
       case 0:
         setSeatWind(tile);
@@ -147,7 +199,8 @@ export default function Index() {
         }
         break;
       case 3:
-        if (hand.filter(tile => tile === null).length > 0) {
+        if (callSelected > 0) handleTileCalls(tile);
+        else if (hand.filter(tile => tile === null).length > 0) {
           let index = hand.indexOf(null);
           const sorted = [...hand.slice(0, index), tile, ...hand.slice(index + 1)].sort((a, b) => (
             b?.sortIndex < (a?.sortIndex ?? Number.MAX_VALUE)) ? 1 : -1
@@ -169,7 +222,7 @@ export default function Index() {
     nextEmptySelection();
     if (seatWind !== null && roundWind !== null & doraIndicators.length > 0 && hand.filter(tile => tile === null).length === 0 && winningTile !== null) {
       // modify handToRiichiString for calls
-      const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, winningTile, "ron");
+      const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, calledTiles, winningTile, "ron");
       const riichi = new Riichi(riichiString);
       const result = riichi.calc();
 
@@ -182,10 +235,11 @@ export default function Index() {
     } else {
       setWinButtonDisabled(true);
     }
-  }, [seatWind, roundWind, doraIndicators, hand, winningTile])
+  }, [seatWind, roundWind, doraIndicators, hand, calledTiles, winningTile])
 
-  const onWinButtonClick = (winningType) => {
-    const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, winningTile, winningType);
+  const handleWinButtonClick = (winningType) => {
+    const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, calledTiles, winningTile, winningType);
+    console.log(riichiString);
     const riichi = new Riichi(riichiString);
     const result = riichi.calc();
 
@@ -212,10 +266,18 @@ export default function Index() {
     }
   }
 
+  const callsDisabled = () => {
+    return false;
+  }
+
+  const calls = ["Chi", "Pon", "Kan", "Ankan"];
+
+  const tileSpacing = matchesLG ? matchesSM ? 0.15 : 0.5 : 0.5;
+
   const selectionTiles = (
-    <Grid item container direction="column" spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1} sx={{ mb: matchesSM ? 3 : 4 }}>
+    <Grid item container direction="column" spacing={tileSpacing} sx={{ mb: matchesSM ? 3 : 4 }}>
       {Array(4).fill().map((_, index) => (
-        <Grid key={`${index}`} item container direction="row" spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1} justifyContent="center">
+        <Grid key={`${index}`} item container direction="row" spacing={tileSpacing} justifyContent="center">
           {(index === 3 ? Array(7).fill().map((_, i) => i + 1) : [1, 2, 3, 4, 5, 5, 6, 7, 8, 9]).map((number, i) => (
             <Grid item key={`${number}${i}`}>
               <Button
@@ -228,7 +290,7 @@ export default function Index() {
                   opacity: tileDisabled(index, i) ? 0.6 : 1
                 }}
                 /* change onClick to send {honor: "name"} of tile instead of actual react tile component */
-                onClick={() => onSelectionTileClick({
+                onClick={() => handleSelectionTileClick({
                   suitIndex: index,
                   index: i,
                   number: number,
@@ -246,7 +308,7 @@ export default function Index() {
   )
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="lg" sx={{ px: matchesSM ? "8px" : undefined }}>
       <Head>
         <title key="title">Riichi Mahjong Score Calculator</title>
         <meta name="description" key="description" content="Simple online calculator for Japanese Riichi Mahjong. Accurately calculates the score and yakus of a hand." />
@@ -254,7 +316,7 @@ export default function Index() {
         <meta property="og:url" content="mahjongscore.com" key="og:url" />
         <link rel="canonical" key="canonical" href="https://mahjongscore.com" />
       </Head>
-      <Box sx={{ my: matchesSM ? 2 : 4 }}>
+      <Box sx={{ my: matchesMD ? 2 : 4 }}>
         <Grid container direction="column">
 
           {/*-----Seat, Round, Dora-----*/}
@@ -278,7 +340,7 @@ export default function Index() {
             <Grid item>
               <Grid item container direction="column">
                 <Typography variant="h1" align="center" sx={{ mb: 2, mt: matchesSM ? 2 : 0 }}>Dora/Uradora Indicator</Typography>
-                <Grid item container direction="row" spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1} justifyContent="center">
+                <Grid item container direction="row" spacing={tileSpacing} justifyContent="center">
                   {doraIndicators.map((tile, index) => (
                     <Grid item key={`${tile}${index}`}>
                       <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { updateTilesUsed([tile], true); setSelectedIndex(2); setDoraIndicators(doraIndicators.filter((_, i) => i !== index)) }}>
@@ -299,10 +361,10 @@ export default function Index() {
           </Grid>
 
           {/*-----Hand-----*/}
-          <Grid item sx={{ mt: matchesSM ? 2 : 4, mb: matchesSM ? 2 : 4 }}>
+          <Grid item sx={{ mt: matchesMD ? 2 : 4, mb: matchesMD ? 2 : 4 }}>
             <Typography variant="h1" align="center">Hand</Typography>
           </Grid>
-          <Grid item container spacing={matchesLG ? matchesSM ? 0.3 : 0.5 : 1} justifyContent={matchesSM ? "center" : undefined}>
+          <Grid item container spacing={tileSpacing} justifyContent={matchesSM ? "center" : undefined}>
             {hand.map((tile, index) => (
               <Grid item key={`${tile}${index}`}>
                 <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { updateTilesUsed([tile], true); setSelectedIndex(3); setHand([...hand.filter((_, i) => i !== index), null]) }}>
@@ -317,8 +379,40 @@ export default function Index() {
             </Grid>
           </Grid>
 
+          {/*-----Called Tiles-----*/}
+          {calledTiles.length === 0 ? null :
+            <React.Fragment>
+              <Grid item sx={{ mt: matchesMD ? 2 : 4, mb: matchesMD ? 2 : 4 }}>
+                <Typography variant="h1" align="center">Called Tiles</Typography>
+              </Grid>
+              <Grid item container spacing={tileSpacing * 5} justifyContent={matchesSM ? "center" : undefined}>
+                {calledTiles.map((tileSet, index) => (
+                  <Grid item key={`${tileSet}${index}`}>
+                    <Grid item container spacing={tileSpacing}>
+                      {tileSet.map((tile, i) => (
+                        <Grid item key={`${tile}${i}`}>
+                          <Button sx={{ padding: 0, minWidth: 0 }}
+                            onClick={() => {
+                              updateTilesUsed(tileSet, true);
+                              setSelectedIndex(3);
+                              setHand([...hand, ...Array(3).fill(null)]);
+                              setCalledTiles(cloneDeep([...calledTiles.slice(0, index), ...calledTiles.slice(index + 1)]));
+                            }}
+                          >
+                            {generateTile(tile)}
+                          </Button>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                ))}
+              </Grid>
+            </React.Fragment>
+          }
+
+
           {/*-----Riichi-----*/}
-          <Grid item sx={{ my: matchesSM ? 3 : 4 }} align="center">
+          <Grid item sx={{ my: matchesMD ? 3 : 4 }} align="center">
             <Button sx={{ padding: 0 }} onClick={() => setRiichiDeclared((riichiDeclared + 1) % 3)} disableRipple>
               <Grid sx={styles.riichi} container direction="row" alignItems="center">
                 <Box sx={{
@@ -335,37 +429,64 @@ export default function Index() {
             </Button>
           </Grid>
 
+          {/*-----Chi/Pon/Kan Selection-----*/}
+          <Grid item sx={{ mb: matchesMD ? 3 : 4 }} container justifyContent="center" spacing={tileSpacing}>
+            <Grid item>
+              <Button
+                disabled={callsDisabled()}
+                variant="contained"
+                onClick={() => callSelected === 1 ? akaChi ? (setCallSelected(0), setAkaChi(false)) : setAkaChi(true) : setCallSelected(1)}
+                sx={[styles.button, { backgroundColor: callSelected === 1 ? "#535A64" : undefined }]}
+              >
+                <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: callsDisabled() ? 0.7 : 1 }}>{akaChi ? "Chi w/ aka" : "Chi"}</Typography>
+              </Button>
+            </Grid>
+            {calls.map((call, index) => (
+              call === "Chi" ? null :
+              <Grid item key={`${call}${index}`}>
+                <Button
+                  disabled={callsDisabled()}
+                  variant="contained"
+                  onClick={() => callSelected === index + 1 ? setCallSelected(0) : setCallSelected(index + 1)}
+                  sx={[styles.button, { backgroundColor: callSelected === index + 1 ? "#535A64" : undefined }]}
+                >
+                  <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: callsDisabled() ? 0.7 : 1 }}>{call}</Typography>
+                </Button>
+              </Grid>
+            ))}
+          </Grid>
+
           {/*-----Selection Tiles-----*/}
           {selectionTiles}
 
           {/*-----Ron/Tsumo Buttons-----*/}
           <Grid item container justifyContent="center" spacing={3}>
             <Grid item>
-              <Button disabled={winButtonDisabled} variant="contained" onClick={() => onWinButtonClick("ron")} sx={{ width: matchesMD ? "8em" : "10em" }}>
+              <Button disabled={winButtonDisabled} variant="contained" onClick={() => handleWinButtonClick("ron")} sx={styles.button}>
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: winButtonDisabled ? 0.7 : 1 }}>Ron</Typography>
               </Button>
             </Grid>
             <Grid item>
-              <Button disabled={winButtonDisabled} variant="contained" onClick={() => onWinButtonClick("tsumo")} sx={{ width: matchesMD ? "8em" : "10em" }}>
+              <Button disabled={winButtonDisabled} variant="contained" onClick={() => handleWinButtonClick("tsumo")} sx={styles.button}>
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: winButtonDisabled ? 0.7 : 1 }}>Tsumo</Typography>
               </Button>
             </Grid>
           </Grid>
 
           {/*-----Clear Buttons-----*/}
-          <Grid item container justifyContent="center" spacing={3} sx={{ my: matchesSM ? 0 : 2 }}>
+          <Grid item container justifyContent="center" spacing={3} sx={{ my: matchesMD ? 0 : 2 }}>
             <Grid item>
-              <Button variant="contained" onClick={() => { updateTilesUsed(doraIndicators, true); setDoraIndicators([]); setSelectedIndex(2); }} sx={{ width: matchesMD ? "8em" : "10em" }}>
+              <Button variant="contained" onClick={() => { updateTilesUsed(doraIndicators, true); setDoraIndicators([]); setSelectedIndex(2); }} sx={styles.button}>
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>Clear Dora</Typography>
               </Button>
             </Grid>
             <Grid item>
-              <Button variant="contained" onClick={() => { updateTilesUsed([...hand, winningTile], true); setHand(hand.map(_ => null)), setWinningTile(null); setSelectedIndex(3); }} sx={{ width: matchesMD ? "8em" : "10em" }}>
+              <Button variant="contained" onClick={() => { updateTilesUsed([...hand, winningTile, ...calledTiles.flat()], true); setHand(Array(13).fill(null)), setCalledTiles([]), setWinningTile(null); setSelectedIndex(3); setCallSelected(0); }} sx={styles.button}>
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>Clear Hand</Typography>
               </Button>
             </Grid>
             <Grid item>
-              <Button variant="contained" onClick={() => { setTilesUsed({}); setSeatWind(null), setRoundWind(null), setDoraIndicators([]), setHand(hand.map(_ => null)), setWinningTile(null); setSelectedIndex(0); }} sx={{ width: matchesMD ? "8em" : "10em" }}>
+              <Button variant="contained" onClick={() => { setTilesUsed({}); setSeatWind(null), setRoundWind(null), setDoraIndicators([]), setHand(hand.map(_ => null)), setCalledTiles([]), setWinningTile(null); setSelectedIndex(0); setCallSelected(0); }} sx={styles.button}>
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>Clear All</Typography>
               </Button>
             </Grid>

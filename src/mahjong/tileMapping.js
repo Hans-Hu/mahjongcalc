@@ -41,10 +41,15 @@ const getNextTileNumber = (suitIndex, number) => {
   }
 }
 
-export const handToRiichiString = (riichi, seatWind, roundWind, doraIndicators, hand, winningTile, winningType) => {
+export const handToRiichiString = (riichi, seatWind, roundWind, doraIndicators, hand, calledTiles, winningTile, winningType) => {
   let handString = "";
   hand.forEach(tile => handString += `${tile.dora ? 0 : tile.number}${suitMapping[tile.suitIndex]}`);
-  handString += `${winningType === "ron" ? "+" : ""}${winningTile.number}${suitMapping[winningTile.suitIndex]}+d`;
+  handString += `${winningType === "ron" ? "+" : ""}${winningTile.number}${suitMapping[winningTile.suitIndex]}`;
+  calledTiles.forEach(tileSet => {
+    let tile = tileSet[0];
+    handString += "+" + `${tile.dora ? 0 : tile.number}${suitMapping[tile.suitIndex]}`.repeat(tile.showBack ? 2 : tileSet.length);
+  })
+  handString += "+d"
   doraIndicators.forEach(tile => handString += `${getNextTileNumber(tile.suitIndex, tile.number)}${suitMapping[tile.suitIndex]}`);
   handString += `+${riichi > 0 ? riichi === 2 ? "w" : "r" : ""}`;
   handString += `${roundWind.number}${seatWind.number}`;
