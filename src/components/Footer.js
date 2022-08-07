@@ -10,8 +10,8 @@ export default function Footer() {
       <Box>
         <Container maxWidth="lg">
           <Typography variant='subtitle1' align="center" sx={{mb: 1, color: "#707070"}}>
-            {`Copyright © ${new Date().getFullYear()} mahjongscore.com | `}
-            <MuiLink href="https://github.com/Hans-Hu/mahjongscore" target="_blank" color="inherit">GitHub</MuiLink>
+            {`Copyright © ${new Date().getFullYear()} mahjongcalc.com | `}
+            <MuiLink href="https://github.com/Hans-Hu/mahjongcalc" target="_blank" color="inherit">GitHub</MuiLink>
           </Typography>
         </Container>
       </Box>
