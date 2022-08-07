@@ -123,7 +123,9 @@ class Riichi {
                 hai += v
                 this.isTsumo = false
             } else {
-                this.furo.push(parse(v).res);
+                let tmp = parse(v);
+                this.furo.push(tmp.res);
+                this.aka += tmp.aka;
                 /*let tmp = []
                 for (let vv of v) {
                     if (MPSZ.includes(vv)) {
