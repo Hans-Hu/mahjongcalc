@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "post-update": "echo \"codesandbox preview only, need an update\" && yarn upgrade --latest",
-    "postbuild": "node scripts/sitemap.js"
+    "postbuild": "node scripts/sitemap.js",
+    "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
     "@emotion/cache": "latest",
@@ -17,8 +18,10 @@
     "@emotion/styled": "latest",
     "@mui/icons-material": "latest",
     "@mui/material": "latest",
+    "@next/bundle-analyzer": "^12.2.4",
     "agari": "^1.1.0",
     "assert": "^2.0.0",
+    "cross-env": "^7.0.3",
     "fs-extra": "^10.1.0",
     "lodash": "^4.17.21",
     "next": "latest",

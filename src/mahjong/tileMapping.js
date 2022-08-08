@@ -12,15 +12,15 @@ const dragonTilesMapping = [
   ["red", "chun"]
 ]
 
-export const getSuitTile = (suit, number, dora = false) => (
+export const getSuitTile = (suit, number) => (
   {
-    src: `/tiles/${suit}${number}${dora ? '-dora' : ''}.svg`,
-    alt: `${dora ? 'aka ' : ''}${number} ${suit}`
+    src: `/tiles/${suit}${number}.svg`,
+    alt: `${number} ${suit}`
   }
 )
 
-export const getTile = (suitIndex, number, dora = false) => (
-  suitIndex === 3 ? getHonorTile(number) : getSuitTile(suits[suitIndex], number, dora)
+export const getTile = (suitIndex, number) => (
+  suitIndex === 3 ? getHonorTile(number) : getSuitTile(suits[suitIndex], number)
 )
 
 export const getHonorTile = (number) => {
@@ -43,14 +43,14 @@ const getNextTileNumber = (suitIndex, number) => {
 
 export const handToRiichiString = (riichi, seatWind, roundWind, doraIndicators, hand, calledTiles, winningTile, winningType) => {
   let handString = "";
-  hand.forEach(tile => handString += `${tile.dora ? 0 : tile.number}${suitMapping[tile.suitIndex]}`);
+  hand.forEach(tile => handString += `${tile.number}${suitMapping[tile.suitIndex]}`);
   handString += `${winningType === "ron" ? "+" : ""}${winningTile.number}${suitMapping[winningTile.suitIndex]}`;
   calledTiles.forEach(tileSet => {
     if (tileSet.length === 4 && tileSet[0].showBack)
-      handString += "+" + `${tileSet[0].dora ? 0 : tileSet[0].number}${suitMapping[tileSet[0].suitIndex]}`.repeat(2);
+      handString += "+" + `${tileSet[0].number}${suitMapping[tileSet[0].suitIndex]}`.repeat(2);
     else {
       handString += "+";
-      tileSet.forEach(tile => handString += `${tile.dora ? 0 : tile.number}${suitMapping[tile.suitIndex]}`);
+      tileSet.forEach(tile => handString += `${tile.number}${suitMapping[tile.suitIndex]}`);
     }
   })
   handString += "+d"

@@ -28,7 +28,8 @@ export default function Index() {
   const [calledTiles, setCalledTiles] = useState([]);
   const [winningTile, setWinningTile] = useState(null);
   const [riichiDeclared, setRiichiDeclared] = useState(1); // 0 - no riichi, 1 - riichi, 2 - double riichi
-  const [selectedIndex, setSelectedIndex] = useState(0); // 0 - seat, 1 - round, 2 - dora, 3 - hand
+  const [selectedIndex, setSelectedIndex] = useState(0); // 0 - seat, 1 - round, 2 - dora, 3 - hand, 4 - winning tile
+  const [selectedSuit, setSelectedSuit] = useState(3); // 0 - Man, 1 - Pin, 2 - Sou, 3 - Jihai
   const [tilesUsed, setTilesUsed] = useState({});
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -40,7 +41,6 @@ export default function Index() {
   const [winButtonDisabled, setWinButtonDisabled] = useState(true);
 
   const [callSelected, setCallSelected] = useState(0); // 0 - none, 1 - chi, 2 - pon, 3 - kan, 4 - ankan
-  const [akaChi, setAkaChi] = useState(false);
 
   const styles = {
     tileBackground: {
@@ -60,6 +60,18 @@ export default function Index() {
         height: '44px'
       }
     },
+    tileBackgroundSmall: {
+      width: '54px',
+      height: '72px',
+      [theme.breakpoints.between("sm", "lg")]: {
+        width: '4.5vw',
+        height: '6vw'
+      },
+      [theme.breakpoints.down("sm")]: {
+        width: '27px',
+        height: '36px'
+      }
+    },
     tileBack: {
       filter: "brightness(0%) invert(81%) sepia(62%) saturate(1671%) hue-rotate(356deg) brightness(101%) contrast(91%)"
     },
@@ -77,17 +89,20 @@ export default function Index() {
       filter: "invert(48%) sepia(86%) saturate(359%) hue-rotate(84deg) brightness(94%) contrast(91%)"
     },
     button: {
-      width: matchesMD ? "8em" : "10em",
-      "&:hover": { backgroundColor: "#535A64" }
+      width: matchesMD ? matchesSM ? "5.8em" : "8em" : "10em",
+      "&:hover": { backgroundColor: matchesSM ? undefined : "#535A64" }
+    },
+    clearButton: {
+      width: matchesMD ? "8em" : "10em"
     }
   };
 
-  const generateTile = ({ suitIndex, number, dora = false, showBack = false }) => (
-    showBack ? tileBack : addTileFront(getTile(suitIndex, number, dora))
+  const generateTile = ({ suitIndex, number, showBack = false }, small = false) => (
+    showBack ? tileBack(small) : addTileFront(getTile(suitIndex, number), small)
   );
 
-  const addTileFront = ({ src, alt }) => (
-    <Box sx={styles.tileBackground}>
+  const addTileFront = ({ src, alt }, small = false) => (
+    <Box sx={[styles.tileBackground, small ? styles.tileBackgroundSmall : undefined]}>
       <img height="75%" src={src} alt={alt} />
     </Box>
   );
@@ -97,8 +112,8 @@ export default function Index() {
     </Box>
   );
 
-  const tileBack = (
-    <Box sx={[styles.tileBackground, styles.tileBack]}>
+  const tileBack = (small = false) => (
+    <Box sx={[styles.tileBackground, styles.tileBack, small ? styles.tileBackgroundSmall : undefined]}>
     </Box>
   );
 
@@ -159,25 +174,25 @@ export default function Index() {
         }
         let tileSet = [];
         for (let number = startingNumber; number <= startingNumber + 2; number++) {
-          tileSet.push({ ...tile, number: number, dora: number === 5 ? akaChi ? true : tile.dora : false })
+          tileSet.push({ ...tile, number: number, index: number - 1 })
         }
         setCalledTiles(cloneDeep([...calledTiles, tileSet]));
-        //updateTilesUsed
+        updateTilesUsed(tileSet);
         setRiichiDeclared(0);
         break;
       case 2:
         setCalledTiles(cloneDeep([...calledTiles, Array(3).fill(tile)]))
-        //updateTilesUsed
+        updateTilesUsed(Array(3).fill(tile));
         setRiichiDeclared(0);
         break;
       case 3:
         setCalledTiles(cloneDeep([...calledTiles, Array(4).fill(tile)]))
-        //updateTilesUsed
+        updateTilesUsed(Array(4).fill(tile));
         setRiichiDeclared(0);
         break;
       case 4:
         setCalledTiles(cloneDeep([...calledTiles, [{ ...tile, showBack: true }, tile, tile, { ...tile, showBack: true }]]));
-        //updateTilesUsed
+        updateTilesUsed(Array(4).fill(tile));
         break;
       default:
         break;
@@ -221,7 +236,6 @@ export default function Index() {
   useEffect(() => {
     nextEmptySelection();
     if (seatWind !== null && roundWind !== null & doraIndicators.length > 0 && hand.filter(tile => tile === null).length === 0 && winningTile !== null) {
-      // modify handToRiichiString for calls
       const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, calledTiles, winningTile, "ron");
       const riichi = new Riichi(riichiString);
       const result = riichi.calc();
@@ -235,12 +249,27 @@ export default function Index() {
     } else {
       setWinButtonDisabled(true);
     }
-  }, [seatWind, roundWind, doraIndicators, hand, calledTiles, winningTile])
+  }, [seatWind, roundWind, doraIndicators, hand, calledTiles, winningTile]);
+
+  useEffect(() => {
+    const len = hand.filter(tile => tile === null).length;
+    if (len < 3 || selectedIndex !== 3) {
+      setCallSelected(0);
+      setCallsDisabled(true);
+    } else {
+      setCallsDisabled(false);
+    }
+
+    if (selectedIndex < 2) {
+      setSelectedSuit(3);
+    }
+  }, [hand, selectedIndex]);
 
   const handleWinButtonClick = (winningType) => {
     const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, calledTiles, winningTile, winningType);
     console.log(riichiString);
     const riichi = new Riichi(riichiString);
+    // manually add aka dora, riichi.aka += 1;
     const result = riichi.calc();
 
     setScoreName(result.name)
@@ -255,56 +284,83 @@ export default function Index() {
   }
 
   const tileDisabled = (index, i) => {
-    if (index < 3 && i === 4 && tilesUsed[`${index},${i}`] >= 1) {
-      return true;
-    } else if (index < 3 && i === 5 && tilesUsed[`${index},${i}`] >= 3) {
-      return true;
-    } else if (tilesUsed[`${index},${i}`] >= 4) {
-      return true;
-    } else {
-      return selectedIndex <= 1 && (i >= 4 || index < 3) || selectedIndex === 5;
+    if (selectedIndex === 5) return true;
+    if (selectedIndex < 2) {
+      return i >= 4 || index < 3;
     }
+    switch (callSelected) {
+      case 1:
+        if (index === 3) return true;
+        let startingIndex = i;
+        if (startingIndex >= 6) {
+          startingIndex = 6
+        }
+        return tilesUsed[`${index},${startingIndex}`] >= 4 || tilesUsed[`${index},${startingIndex + 1}`] >= 4 || tilesUsed[`${index},${startingIndex + 2}`] >= 4
+      case 2:
+        return tilesUsed[`${index},${i}`] >= 2;
+      case 3:
+      case 4:
+        return tilesUsed[`${index},${i}`] >= 1;
+      default:
+        break;
+    }
+    return tilesUsed[`${index},${i}`] >= 4;
   }
 
-  const callsDisabled = () => {
-    return false;
-  }
+  const [callsDisabled, setCallsDisabled] = useState(false);
 
   const calls = ["Chi", "Pon", "Kan", "Ankan"];
+  const suits = ["Man", "Pin", "Sou", "Jihai"];
 
   const tileSpacing = matchesLG ? matchesSM ? 0.15 : 0.5 : 0.5;
 
   const selectionTiles = (
-    <Grid item container direction="column" spacing={tileSpacing} sx={{ mb: matchesSM ? 3 : 4 }}>
-      {Array(4).fill().map((_, index) => (
-        <Grid key={`${index}`} item container direction="row" spacing={tileSpacing} justifyContent="center">
-          {(index === 3 ? Array(7).fill().map((_, i) => i + 1) : [1, 2, 3, 4, 5, 5, 6, 7, 8, 9]).map((number, i) => (
-            <Grid item key={`${number}${i}`}>
+    <React.Fragment>
+      <Grid item container sx={{ mb: 2 }} justifyContent="center" spacing={tileSpacing}>
+        {suits.map((suit, index) => (
+          <Grid item key={`${suit}${index}`}>
+            <Button
+              variant="contained"
+              onClick={() => setSelectedSuit(index)}
+              sx={[styles.button, {
+                backgroundColor: selectedSuit === index ? "#535A64" : undefined,
+                "&:hover": {
+                  backgroundColor: "#535A64"
+                }
+              }]}
+            >
+              <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: callsDisabled ? 0.7 : 1 }}>{suit}</Typography>
+            </Button>
+          </Grid>
+        ))}
+      </Grid>
+      <Grid item container direction="column" spacing={tileSpacing} sx={{ mb: matchesSM ? 3 : 4 }}>
+        <Grid item container direction="row" spacing={tileSpacing} justifyContent="center">
+          {Array(selectedSuit === 3 ? 7 : 9).fill().map((_, i) => (
+            <Grid item key={`${i}`}>
               <Button
                 disabled={
-                  tileDisabled(index, i)
+                  tileDisabled(selectedSuit, i)
                 }
                 sx={{
                   padding: 0,
                   minWidth: 0,
-                  opacity: tileDisabled(index, i) ? 0.6 : 1
+                  opacity: tileDisabled(selectedSuit, i) ? 0.6 : 1
                 }}
-                /* change onClick to send {honor: "name"} of tile instead of actual react tile component */
                 onClick={() => handleSelectionTileClick({
-                  suitIndex: index,
+                  suitIndex: selectedSuit,
                   index: i,
-                  number: number,
-                  dora: index < 3 && i === 4,
-                  sortIndex: index * 10 + i
+                  number: i + 1,
+                  sortIndex: selectedSuit * 10 + i
                 })}
               >
-                {generateTile({ suitIndex: index, index: i, number: number, dora: i === 4 })}
+                {generateTile({ suitIndex: selectedSuit, index: i, number: i + 1 })}
               </Button>
             </Grid>
           ))}
         </Grid>
-      ))}
-    </Grid>
+      </Grid>
+    </React.Fragment>
   )
 
   return (
@@ -322,24 +378,35 @@ export default function Index() {
           {/*-----Seat, Round, Dora-----*/}
           <Grid item container direction={matchesSM ? "column" : "row"} justifyContent={matchesSM ? "center" : "space-between"}>
             <Grid item>
-              <Grid item container direction="row" spacing={matchesLG ? matchesSM ? 0 : 2 : 4} sx={{ width: matchesSM ? "8em" : undefined, mx: matchesSM ? "auto" : undefined }}>
-                <Grid item container direction="column" align="center" xs>
-                  <Typography variant="h1" sx={{ mb: 2 }}>Seat</Typography>
+              <Grid item container direction="row" spacing={matchesLG ? matchesSM ? 0 : 2 : 4} sx={{ mx: matchesSM ? "auto" : undefined }}>
+                <Grid item container
+                  direction={matchesSM ? "row" : "column"}
+                  align="center"
+                  justifyContent={matchesSM ? "flex-end" : undefined}
+                  alignItems={matchesSM ? "center" : undefined}
+                  sx={{ mr: matchesSM ? 10 : 0 }} xs
+                >
+                  <Typography variant="h1" sx={{ mb: matchesSM ? 0 : 2, mr: matchesSM ? 1 : 0 }}>Seat</Typography>
                   <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { setSeatWind(null); setSelectedIndex(0); }}>
                     {seatWind === null ? selectedIndex === 0 ? selectedEmptyTile : emptyTile : generateTile(seatWind)}
                   </Button>
                 </Grid>
-                <Grid item container direction="column" align="center" xs>
-                  <Typography variant="h1" sx={{ mb: 2 }}>Round</Typography>
+                <Grid item container
+                  direction={matchesSM ? "row" : "column"}
+                  align="center"
+                  alignItems={matchesSM ? "center" : undefined} xs
+                >
+                  <Hidden smDown><Typography variant="h1" sx={{ mb: 2 }}>Round</Typography></Hidden>
                   <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { setRoundWind(null); setSelectedIndex(1); }}>
                     {roundWind === null ? selectedIndex === 1 ? selectedEmptyTile : emptyTile : generateTile(roundWind)}
                   </Button>
+                  <Hidden smUp><Typography variant="h1" sx={{ mb: matchesSM ? 0 : 2, ml: matchesSM ? 1 : 0 }}>Round</Typography></Hidden>
                 </Grid>
               </Grid>
             </Grid>
             <Grid item>
               <Grid item container direction="column">
-                <Typography variant="h1" align="center" sx={{ mb: 2, mt: matchesSM ? 2 : 0 }}>Dora/Uradora Indicator</Typography>
+                <Typography variant="h1" align="center" sx={{ mb: 2 }}>Dora/Uradora Indicator</Typography>
                 <Grid item container direction="row" spacing={tileSpacing} justifyContent="center">
                   {doraIndicators.map((tile, index) => (
                     <Grid item key={`${tile}${index}`}>
@@ -360,35 +427,36 @@ export default function Index() {
             </Grid>
           </Grid>
 
+
           {/*-----Hand-----*/}
-          <Grid item sx={{ mt: matchesMD ? 2 : 4, mb: matchesMD ? 2 : 4 }}>
-            <Typography variant="h1" align="center">Hand</Typography>
-          </Grid>
-          <Grid item container spacing={tileSpacing} justifyContent={matchesSM ? "center" : undefined}>
-            {hand.map((tile, index) => (
-              <Grid item key={`${tile}${index}`}>
-                <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { updateTilesUsed([tile], true); setSelectedIndex(3); setHand([...hand.filter((_, i) => i !== index), null]) }}>
-                  {tile === null ? selectedIndex === 3 && hand.filter(t => t !== null).length === index ? selectedEmptyTile : emptyTile : generateTile(tile)}
+
+          <Grid item container direction="column" sx={{ minHeight: matchesSM ? "197px" : undefined }}>
+            <Grid item sx={{ mt: matchesMD ? 2 : 4, mb: matchesMD ? 2 : 4 }}>
+              <Typography variant="h1" align="center">Hand</Typography>
+            </Grid>
+            <Grid item container sx={{ mb: 2 }} spacing={tileSpacing} justifyContent={matchesSM ? "center" : undefined}>
+              {hand.map((tile, index) => (
+                <Grid item key={`${tile}${index}`}>
+                  <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { updateTilesUsed([tile], true); setSelectedIndex(3); setHand([...hand.filter((_, i) => i !== index), null]) }}>
+                    {tile === null ? selectedIndex === 3 && hand.filter(t => t !== null).length === index ? selectedEmptyTile : emptyTile : generateTile(tile)}
+                  </Button>
+                </Grid>
+              ))}
+              <Grid item sx={{ ml: matchesSM ? undefined : 'auto' }}>
+                <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { updateTilesUsed([winningTile], true); setWinningTile(null); setSelectedIndex(4); }}>
+                  {winningTile === null ? selectedIndex === 4 ? selectedEmptyTile : emptyTile : generateTile(winningTile)}
                 </Button>
               </Grid>
-            ))}
-            <Grid item sx={{ ml: matchesSM ? undefined : 'auto' }}>
-              <Button sx={{ padding: 0, minWidth: 0 }} onClick={() => { updateTilesUsed([winningTile], true); setWinningTile(null); setSelectedIndex(4); }}>
-                {winningTile === null ? selectedIndex === 4 ? selectedEmptyTile : emptyTile : generateTile(winningTile)}
-              </Button>
             </Grid>
-          </Grid>
 
-          {/*-----Called Tiles-----*/}
-          {calledTiles.length === 0 ? null :
-            <React.Fragment>
-              <Grid item sx={{ mt: matchesMD ? 2 : 4, mb: matchesMD ? 2 : 4 }}>
-                <Typography variant="h1" align="center">Called Tiles</Typography>
-              </Grid>
-              <Grid item container spacing={tileSpacing * 5} justifyContent={matchesSM ? "center" : undefined}>
+            {/*-----Called Tiles-----*/}
+            {calledTiles.length === 0 ?
+              <Box sx={[styles.tileBackground, { background: "none" }, styles.tileBackgroundSmall]}>
+              </Box> :
+              <Grid item container spacing={tileSpacing * 4} justifyContent={matchesSM ? "center" : undefined}>
                 {calledTiles.map((tileSet, index) => (
                   <Grid item key={`${tileSet}${index}`}>
-                    <Grid item container spacing={tileSpacing}>
+                    <Grid item container spacing={tileSpacing * 0.8}>
                       {tileSet.map((tile, i) => (
                         <Grid item key={`${tile}${i}`}>
                           <Button sx={{ padding: 0, minWidth: 0 }}
@@ -399,7 +467,7 @@ export default function Index() {
                               setCalledTiles(cloneDeep([...calledTiles.slice(0, index), ...calledTiles.slice(index + 1)]));
                             }}
                           >
-                            {generateTile(tile)}
+                            {generateTile(tile, true)}
                           </Button>
                         </Grid>
                       ))}
@@ -407,12 +475,14 @@ export default function Index() {
                   </Grid>
                 ))}
               </Grid>
-            </React.Fragment>
-          }
+            }
+          </Grid>
+
+
 
 
           {/*-----Riichi-----*/}
-          <Grid item sx={{ my: matchesMD ? 3 : 4 }} align="center">
+          <Grid item sx={{ mt: matchesMD ? 3 : 4 }} align="center">
             <Button sx={{ padding: 0 }} onClick={() => setRiichiDeclared((riichiDeclared + 1) % 3)} disableRipple>
               <Grid sx={styles.riichi} container direction="row" alignItems="center">
                 <Box sx={{
@@ -425,32 +495,25 @@ export default function Index() {
                 }}></Box>
                 <Typography variant='subtitle1' sx={{ textTransform: "none" }}>{riichiDeclared === 2 ? "x2" : ''}</Typography>
               </Grid>
-
             </Button>
           </Grid>
 
           {/*-----Chi/Pon/Kan Selection-----*/}
-          <Grid item sx={{ mb: matchesMD ? 3 : 4 }} container justifyContent="center" spacing={tileSpacing}>
-            <Grid item>
-              <Button
-                disabled={callsDisabled()}
-                variant="contained"
-                onClick={() => callSelected === 1 ? akaChi ? (setCallSelected(0), setAkaChi(false)) : setAkaChi(true) : setCallSelected(1)}
-                sx={[styles.button, { backgroundColor: callSelected === 1 ? "#535A64" : undefined }]}
-              >
-                <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: callsDisabled() ? 0.7 : 1 }}>{akaChi ? "Chi w/ aka" : "Chi"}</Typography>
-              </Button>
-            </Grid>
+          <Grid item sx={{ mt: matchesMD ? 3 : 4, mb: 2 }} container justifyContent="center" spacing={tileSpacing}>
             {calls.map((call, index) => (
-              call === "Chi" ? null :
               <Grid item key={`${call}${index}`}>
                 <Button
-                  disabled={callsDisabled()}
+                  disabled={callsDisabled}
                   variant="contained"
                   onClick={() => callSelected === index + 1 ? setCallSelected(0) : setCallSelected(index + 1)}
-                  sx={[styles.button, { backgroundColor: callSelected === index + 1 ? "#535A64" : undefined }]}
+                  sx={[styles.button, {
+                    backgroundColor: callSelected === index + 1 ? "#535A64" : undefined,
+                    "&:hover": {
+                      backgroundColor: !matchesSM || (matchesSM && callSelected === index + 1) ? "#535A64" : undefined
+                    }
+                  }]}
                 >
-                  <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: callsDisabled() ? 0.7 : 1 }}>{call}</Typography>
+                  <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: callsDisabled ? 0.7 : 1 }}>{call}</Typography>
                 </Button>
               </Grid>
             ))}
@@ -476,17 +539,47 @@ export default function Index() {
           {/*-----Clear Buttons-----*/}
           <Grid item container justifyContent="center" spacing={3} sx={{ my: matchesMD ? 0 : 2 }}>
             <Grid item>
-              <Button variant="contained" onClick={() => { updateTilesUsed(doraIndicators, true); setDoraIndicators([]); setSelectedIndex(2); }} sx={styles.button}>
+              <Button variant="contained"
+                onClick={() => {
+                  updateTilesUsed(doraIndicators, true);
+                  setDoraIndicators([]);
+                  setSelectedIndex(2);
+                }}
+                sx={[styles.button, styles.clearButton]}
+              >
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>Clear Dora</Typography>
               </Button>
             </Grid>
             <Grid item>
-              <Button variant="contained" onClick={() => { updateTilesUsed([...hand, winningTile, ...calledTiles.flat()], true); setHand(Array(13).fill(null)), setCalledTiles([]), setWinningTile(null); setSelectedIndex(3); setCallSelected(0); }} sx={styles.button}>
+              <Button variant="contained"
+                onClick={() => {
+                  updateTilesUsed([...hand, winningTile, ...calledTiles.flat()], true);
+                  setHand(Array(13).fill(null)),
+                  setCalledTiles([]),
+                  setWinningTile(null);
+                  setSelectedIndex(3);
+                  setCallSelected(0);
+                }}
+                sx={[styles.button, styles.clearButton]}
+              >
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>Clear Hand</Typography>
               </Button>
             </Grid>
             <Grid item>
-              <Button variant="contained" onClick={() => { setTilesUsed({}); setSeatWind(null), setRoundWind(null), setDoraIndicators([]), setHand(hand.map(_ => null)), setCalledTiles([]), setWinningTile(null); setSelectedIndex(0); setCallSelected(0); }} sx={styles.button}>
+              <Button variant="contained"
+                onClick={() => {
+                  setTilesUsed({});
+                  setSeatWind(null),
+                  setRoundWind(null),
+                  setDoraIndicators([]),
+                  setHand(Array(13).fill(null)),
+                  setCalledTiles([]),
+                  setWinningTile(null);
+                  setSelectedIndex(0);
+                  setCallSelected(0);
+                }}
+                sx={[styles.button, styles.clearButton]}
+              >
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>Clear All</Typography>
               </Button>
             </Grid>
