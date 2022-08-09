@@ -329,7 +329,7 @@ export default function Index() {
                 }
               }]}
             >
-              <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: callsDisabled ? 0.7 : 1 }}>{suit}</Typography>
+              <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined }}>{suit}</Typography>
             </Button>
           </Grid>
         ))}
