@@ -335,30 +335,33 @@ export default function Index() {
         ))}
       </Grid>
       <Grid item container direction="column" spacing={tileSpacing} sx={{ mb: matchesSM ? 3 : 4 }}>
-        <Grid item container direction="row" spacing={tileSpacing} justifyContent="center">
-          {Array(selectedSuit === 3 ? 7 : 9).fill().map((_, i) => (
-            <Grid item key={`${i}`}>
-              <Button
-                disabled={
-                  tileDisabled(selectedSuit, i)
-                }
-                sx={{
-                  padding: 0,
-                  minWidth: 0,
-                  opacity: tileDisabled(selectedSuit, i) ? 0.6 : 1
-                }}
-                onClick={() => handleSelectionTileClick({
-                  suitIndex: selectedSuit,
-                  index: i,
-                  number: i + 1,
-                  sortIndex: selectedSuit * 10 + i
-                })}
-              >
-                {generateTile({ suitIndex: selectedSuit, index: i, number: i + 1 })}
-              </Button>
-            </Grid>
-          ))}
-        </Grid>
+        {Array(4).fill().map((_, index) => (
+          <Grid key={`${index}`} item container direction="row" spacing={tileSpacing} justifyContent="center" sx={{ display: selectedSuit === index ? undefined : "none" }}>
+            {Array(index === 3 ? 7 : 9).fill().map((_, i) => (
+              <Grid item key={`${i}`}>
+                <Button
+                  disabled={
+                    tileDisabled(index, i)
+                  }
+                  sx={{
+                    padding: 0,
+                    minWidth: 0,
+                    opacity: tileDisabled(index, i) ? 0.6 : 1
+                  }}
+                  onClick={() => handleSelectionTileClick({
+                    suitIndex: index,
+                    index: i,
+                    number: i + 1,
+                    sortIndex: index * 10 + i
+                  })}
+                >
+                  {generateTile({ suitIndex: index, index: i, number: i + 1 })}
+                </Button>
+              </Grid>
+            ))}
+          </Grid>
+        ))}
+
       </Grid>
     </React.Fragment>
   )
