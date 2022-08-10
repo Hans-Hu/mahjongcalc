@@ -9,15 +9,19 @@ export default class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
-        <link rel="icon" href="/favicon.png" />
+          <link rel="icon" href="/favicon.png" />
           {/* PWA primary color */}
           <meta name="theme-color" content={theme.palette.primary.main} />
           <meta property="og:type" content="website" />
-          <meta property="og:image" content="https://i.imgur.com/yYUVLtA.png" />
+          <meta property="og:image" content="https://i.imgur.com/WsyIXwI.png" />
           <meta property="og:image:type" content="image/png" />
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />
           <meta property="og:image:alt" content="site preview" />
+          <meta property="twitter:card" content="summary_large_image" />
+          <meta property="twitter:domain" content="mahjongcalc.com" />
+          <meta property="twitter:image" content="https://i.imgur.com/yYUVLtA.png" />
+          <meta property="twitter:image:alt" content="site preview" />
           <link
             rel="stylesheet"
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"

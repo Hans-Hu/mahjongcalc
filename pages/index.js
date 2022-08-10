@@ -372,8 +372,13 @@ export default function Index() {
         <title key="title">Riichi Mahjong Score Calculator</title>
         <meta name="description" key="description" content="Simple online calculator for Japanese Riichi Mahjong. Accurately calculates the score and yakus of a hand." />
         <meta property="og:title" content="Riichi Mahjong Score Calculator" key="og:title" />
-        <meta property="og:url" content="mahjongscore.com" key="og:url" />
-        <link rel="canonical" key="canonical" href="https://mahjongscore.com" />
+        <meta property="og:url" content="www.mahjongscore.com" key="og:url" />
+        <meta property="og:description" key="og:description" content="Simple online calculator for Japanese Riichi Mahjong. Accurately calculates the score and yakus of a hand."/>
+        <meta property="twitter:url" content="https://www.mahjongcalc.com/" key="twitter:url" />
+        <meta property="twitter:description" key="twitter:description" content="Simple online calculator for Japanese Riichi Mahjong. Accurately calculates the score and yakus of a hand." />
+        <meta property="twitter:title" content="Riichi Mahjong Score Calculator" key="twitter:title" />
+
+        <link rel="canonical" key="canonical" href="https://www.mahjongscore.com" />
       </Head>
       <Box sx={{ my: matchesMD ? 2 : 4 }}>
         <Grid container direction="column">

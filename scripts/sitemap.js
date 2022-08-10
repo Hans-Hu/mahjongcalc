@@ -4,7 +4,7 @@ const formatDate = require("./formatDate");
 
 // ROBOTS.txt
 const robotsTxt = `User-agent: *
-Sitemap: https://mahjongcalc.com/sitemap_local.xml
+Sitemap: https://www.mahjongcalc.com/sitemap_local.xml
 Disallow:`;
 
 fs.writeFileSync("public/robots.txt", robotsTxt);
@@ -22,8 +22,8 @@ const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
       path => `<url>
     ${
       path === "/index"
-        ? `<loc>https://mahjongcalc.com</loc>`
-        : `<loc>https://mahjongcalc.com${path}</loc>`
+        ? `<loc>https://www.mahjongcalc.com</loc>`
+        : `<loc>https://www.mahjongcalc.com${path}</loc>`
     }
     <lastmod>${
       pathsObj[path].lastModified
