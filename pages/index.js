@@ -13,7 +13,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import Hidden from '@mui/material/Hidden';
 import Head from 'next/head';
 import Riichi from '../src/mahjong/riichi';
-import { cloneDeep } from 'lodash';
+
+const clone2D = (array) => array.map(subArray => subArray.slice());
 
 export default function Index() {
   const theme = useTheme();
@@ -176,22 +177,22 @@ export default function Index() {
         for (let number = startingNumber; number <= startingNumber + 2; number++) {
           tileSet.push({ ...tile, number: number, index: number - 1 })
         }
-        setCalledTiles(cloneDeep([...calledTiles, tileSet]));
+        setCalledTiles(clone2D([...calledTiles, tileSet]));
         updateTilesUsed(tileSet);
         setRiichiDeclared(0);
         break;
       case 2:
-        setCalledTiles(cloneDeep([...calledTiles, Array(3).fill(tile)]))
+        setCalledTiles(clone2D([...calledTiles, Array(3).fill(tile)]))
         updateTilesUsed(Array(3).fill(tile));
         setRiichiDeclared(0);
         break;
       case 3:
-        setCalledTiles(cloneDeep([...calledTiles, Array(4).fill(tile)]))
+        setCalledTiles(clone2D([...calledTiles, Array(4).fill(tile)]))
         updateTilesUsed(Array(4).fill(tile));
         setRiichiDeclared(0);
         break;
       case 4:
-        setCalledTiles(cloneDeep([...calledTiles, [{ ...tile, showBack: true }, tile, tile, { ...tile, showBack: true }]]));
+        setCalledTiles(clone2D([...calledTiles, [{ ...tile, showBack: true }, tile, tile, { ...tile, showBack: true }]]));
         updateTilesUsed(Array(4).fill(tile));
         break;
       default:
@@ -472,7 +473,7 @@ export default function Index() {
                               updateTilesUsed(tileSet, true);
                               setSelectedIndex(3);
                               setHand([...hand, ...Array(3).fill(null)]);
-                              setCalledTiles(cloneDeep([...calledTiles.slice(0, index), ...calledTiles.slice(index + 1)]));
+                              setCalledTiles(clone2D([...calledTiles.slice(0, index), ...calledTiles.slice(index + 1)]));
                             }}
                           >
                             {generateTile(tile, true)}

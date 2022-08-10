@@ -23,7 +23,6 @@
     "assert": "^2.0.0",
     "cross-env": "^7.0.3",
     "fs-extra": "^10.1.0",
-    "lodash": "^4.17.21",
     "next": "latest",
     "prop-types": "latest",
     "react": "latest",
