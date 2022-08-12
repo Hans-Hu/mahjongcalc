@@ -13,6 +13,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import Hidden from '@mui/material/Hidden';
 import Head from 'next/head';
 import Riichi from '../src/mahjong/riichi';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
+import ArrowDropUp from '@mui/icons-material/ArrowDropUp';
 
 const clone2D = (array) => array.map(subArray => subArray.slice());
 
@@ -32,6 +34,7 @@ export default function Index() {
   const [selectedIndex, setSelectedIndex] = useState(0); // 0 - seat, 1 - round, 2 - dora, 3 - hand, 4 - winning tile
   const [selectedSuit, setSelectedSuit] = useState(3); // 0 - Man, 1 - Pin, 2 - Sou, 3 - Jihai
   const [tilesUsed, setTilesUsed] = useState({});
+  const [akaDora, setAkaDora] = useState(0);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [scoreMessage, setScoreMessage] = useState("");
@@ -39,9 +42,15 @@ export default function Index() {
   const [miniPointsMessage, setMiniPointsMessage] = useState("");
   const [yakus, setYakus] = useState({});
 
+  const [ippatsu, setIppatsu] = useState(false);
+  const [extraIndex, setExtraIndex] = useState(0); // 0 - none, 1 - chankan, 2 - rinshan kaihou, 3 - haitei/houtei,  4 - tenhou/chiihou
+  const extraMapping = ["", "k", "k", "h", "t"];
+
   const [winButtonDisabled, setWinButtonDisabled] = useState(true);
 
   const [callSelected, setCallSelected] = useState(0); // 0 - none, 1 - chi, 2 - pon, 3 - kan, 4 - ankan
+
+  const [openOptions, setOpenOptions] = useState(false);
 
   const styles = {
     tileBackground: {
@@ -95,6 +104,18 @@ export default function Index() {
     },
     clearButton: {
       width: matchesMD ? "8em" : "10em"
+    },
+    extraOptions: {
+      backgroundColor: theme.palette.primary.main,
+      minWidth: "350px",
+      position: "fixed",
+      top: openOptions ? "48px" : "-291px",
+      zIndex: 1301,
+      left: "50%",
+      transform: "translateX(-50%)",
+      transition: "top 0.3s",
+      borderRadius: "0 0 5px 5px",
+      boxShadow: openOptions ? 4 : 0
     }
   };
 
@@ -268,9 +289,9 @@ export default function Index() {
 
   const handleWinButtonClick = (winningType) => {
     const riichiString = handToRiichiString(riichiDeclared, seatWind, roundWind, doraIndicators, hand, calledTiles, winningTile, winningType);
-    console.log(riichiString);
     const riichi = new Riichi(riichiString);
-    // manually add aka dora, riichi.aka += 1;
+    riichi.aka = akaDora;
+    riichi.extra = `${ippatsu ? "i" : ""}${extraMapping[extraIndex]}` + riichi.extra;
     const result = riichi.calc();
 
     setScoreName(result.name)
@@ -367,6 +388,95 @@ export default function Index() {
     </React.Fragment>
   )
 
+  const extraOptionsName = ["Chankan", "Rinshan Kaihou", "Haitei / Houtei", seatWind === null ? "Tenhou / Chiihou" : seatWind.index === 0 ? "Tenhou" : "Chiihou"]
+  const extraOptions = (
+    <Box sx={styles.extraOptions} justifyContent="center">
+      <Box>
+        <Grid container direction="column" sx={{ px: 3, pt: 3 }}>
+          <Grid item container direction="row" alignItems="center">
+            <Grid item>
+              <Typography variant='h1'>Aka dora: </Typography>
+            </Grid>
+            <Grid item container xs justifyContent="flex-end" alignItems="center">
+              <Grid item>
+                <Button
+                  sx={{
+                    backgroundColor: theme.palette.background.default,
+                    minWidth: 0,
+                    width: "2em",
+                    height: "2em",
+                    mr: 1,
+                    "&:hover": {
+                      backgroundColor: theme.palette.background.default
+                    }
+                  }}
+                  onClick={() => setAkaDora(Math.max(akaDora - 1, 0))}
+                >
+                  <Typography variant='h1'>-</Typography>
+                </Button>
+              </Grid>
+              <Grid item>
+                <Typography variant='h1'>{akaDora}</Typography>
+              </Grid>
+              <Grid item>
+                <Button
+                  sx={{
+                    backgroundColor: theme.palette.background.default,
+                    minWidth: 0,
+                    width: "2em",
+                    height: "2em",
+                    ml: 1,
+                    "&:hover": {
+                      backgroundColor: theme.palette.background.default
+                    }
+                  }}
+                  onClick={() => setAkaDora(Math.min(akaDora + 1, 4))}
+                >
+                  <Typography variant='h1'>+</Typography>
+                </Button>
+              </Grid>
+            </Grid>
+          </Grid>
+          <Grid item>
+            <Button
+              sx={[styles.button, {
+                backgroundColor: ippatsu ? "#535A64" : theme.palette.background.default,
+                width: "100%", mt: 2,
+                "&:hover": {
+                  backgroundColor: !matchesSM || (matchesSM && ippatsu) ? "#535A64" : undefined
+                }
+              }]}
+              onClick={() => { setIppatsu(!ippatsu); setExtraIndex(extraIndex % 2 === 0 ? false : extraIndex) }}
+            >
+              <Typography variant='h1' >Ippatsu</Typography>
+            </Button>
+          </Grid>
+          {extraOptionsName.map((name, index) => (
+            <Grid item key={`${name}${index}`}>
+              <Button
+                sx={[styles.button, {
+                  backgroundColor: index + 1 === extraIndex ? "#535A64" : theme.palette.background.default,
+                  width: "100%", mt: 2,
+                  "&:hover": {
+                    backgroundColor: !matchesSM || (matchesSM && index + 1 === extraIndex) ? "#535A64" : undefined
+                  }
+                }]}
+                onClick={() => { extraIndex === index + 1 ? setExtraIndex(0) : setExtraIndex(index + 1); setIppatsu((index + 1) % 2 === 0 ? false : ippatsu) }}
+              >
+                <Typography variant='h1' >{name}</Typography>
+              </Button>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+      <Box display="flex" justifyContent="center" sx={{ mx: "auto", width: "60px", height: "30px", transform: "translateY(30px)", backgroundColor: theme.palette.primary.main, borderRadius: "0 0 15px 15px", boxShadow: 4 }}>
+        <IconButton onClick={() => setOpenOptions(!openOptions)} disableRipple sx={{ width: "100%" }}>
+          {openOptions ? <ArrowDropUp color='secondary' /> : <ArrowDropDown color='secondary' />}
+        </IconButton>
+      </Box>
+    </Box>
+  )
+
   return (
     <Container maxWidth="lg" sx={{ px: matchesSM ? "8px" : undefined }}>
       <Head>
@@ -374,13 +484,14 @@ export default function Index() {
         <meta name="description" key="description" content="Simple online calculator for Japanese Riichi Mahjong. Accurately calculates the score and yakus of a hand." />
         <meta property="og:title" content="Riichi Mahjong Score Calculator" key="og:title" />
         <meta property="og:url" content="www.mahjongscore.com" key="og:url" />
-        <meta property="og:description" key="og:description" content="Simple online calculator for Japanese Riichi Mahjong. Accurately calculates the score and yakus of a hand."/>
+        <meta property="og:description" key="og:description" content="Simple online calculator for Japanese Riichi Mahjong. Accurately calculates the score and yakus of a hand." />
         <meta property="twitter:url" content="https://www.mahjongcalc.com/" key="twitter:url" />
         <meta property="twitter:description" key="twitter:description" content="Simple online calculator for Japanese Riichi Mahjong. Accurately calculates the score and yakus of a hand." />
         <meta property="twitter:title" content="Riichi Mahjong Score Calculator" key="twitter:title" />
 
         <link rel="canonical" key="canonical" href="https://www.mahjongscore.com" />
       </Head>
+      {extraOptions}
       <Box sx={{ my: matchesMD ? 2 : 4 }}>
         <Grid container direction="column">
 
@@ -534,12 +645,12 @@ export default function Index() {
           {/*-----Ron/Tsumo Buttons-----*/}
           <Grid item container justifyContent="center" spacing={3}>
             <Grid item>
-              <Button disabled={winButtonDisabled} variant="contained" onClick={() => handleWinButtonClick("ron")} sx={styles.button}>
+              <Button disabled={winButtonDisabled || extraIndex === 2 || extraIndex === 4} variant="contained" onClick={() => handleWinButtonClick("ron")} sx={styles.button}>
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: winButtonDisabled ? 0.7 : 1 }}>Ron</Typography>
               </Button>
             </Grid>
             <Grid item>
-              <Button disabled={winButtonDisabled} variant="contained" onClick={() => handleWinButtonClick("tsumo")} sx={styles.button}>
+              <Button disabled={winButtonDisabled || extraIndex === 1} variant="contained" onClick={() => handleWinButtonClick("tsumo")} sx={styles.button}>
                 <Typography variant='h1' sx={{ fontSize: matchesMD ? "0.9rem" : undefined, opacity: winButtonDisabled ? 0.7 : 1 }}>Tsumo</Typography>
               </Button>
             </Grid>
@@ -568,6 +679,9 @@ export default function Index() {
                   setWinningTile(null);
                   setSelectedIndex(3);
                   setCallSelected(0);
+                  setAkaDora(0);
+                  setIppatsu(false);
+                  setExtraIndex(0);
                 }}
                 sx={[styles.button, styles.clearButton]}
               >
@@ -586,6 +700,9 @@ export default function Index() {
                   setWinningTile(null);
                   setSelectedIndex(0);
                   setCallSelected(0);
+                  setAkaDora(0);
+                  setIppatsu(false);
+                  setExtraIndex(0);
                 }}
                 sx={[styles.button, styles.clearButton]}
               >
