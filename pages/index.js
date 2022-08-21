@@ -19,6 +19,17 @@ import ArrowDropUp from '@mui/icons-material/ArrowDropUp';
 const clone2D = (array) => array.map(subArray => subArray.slice());
 
 export default function Index() {
+  const [windowHeight, setWindowHeight] = useState(0);
+
+  useEffect(() => {
+    function handleResize() {
+      setWindowHeight(window.innerHeight);
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const theme = useTheme();
   const matchesSM = useMediaQuery(theme.breakpoints.down("sm"));
   const matchesMD = useMediaQuery(theme.breakpoints.down("md"));
@@ -100,7 +111,7 @@ export default function Index() {
     },
     button: {
       width: matchesMD ? matchesSM ? "5.8em" : "8em" : "10em",
-      "&:hover": { backgroundColor: matchesSM ? undefined : "#535A64" }
+      "&:hover": { backgroundColor: matchesSM || windowHeight < 500 ? undefined : "#535A64" }
     },
     clearButton: {
       width: matchesMD ? "8em" : "10em"
@@ -388,93 +399,128 @@ export default function Index() {
     </React.Fragment>
   )
 
-  const extraOptionsName = ["Chankan", "Rinshan Kaihou", "Haitei / Houtei", seatWind === null ? "Tenhou / Chiihou" : seatWind.index === 0 ? "Tenhou" : "Chiihou"]
-  const extraOptions = (
-    <Box sx={styles.extraOptions} justifyContent="center">
-      <Box>
-        <Grid container direction="column" sx={{ px: 3, pt: 3 }}>
-          <Grid item container direction="row" alignItems="center">
-            <Grid item>
-              <Typography variant='h1'>Aka dora: </Typography>
-            </Grid>
-            <Grid item container xs justifyContent="flex-end" alignItems="center">
-              <Grid item>
-                <Button
-                  sx={{
-                    backgroundColor: theme.palette.background.default,
-                    minWidth: 0,
-                    width: "2em",
-                    height: "2em",
-                    mr: 1,
-                    "&:hover": {
-                      backgroundColor: theme.palette.background.default
-                    }
-                  }}
-                  onClick={() => setAkaDora(Math.max(akaDora - 1, 0))}
-                >
-                  <Typography variant='h1'>-</Typography>
-                </Button>
-              </Grid>
-              <Grid item>
-                <Typography variant='h1'>{akaDora}</Typography>
-              </Grid>
-              <Grid item>
-                <Button
-                  sx={{
-                    backgroundColor: theme.palette.background.default,
-                    minWidth: 0,
-                    width: "2em",
-                    height: "2em",
-                    ml: 1,
-                    "&:hover": {
-                      backgroundColor: theme.palette.background.default
-                    }
-                  }}
-                  onClick={() => setAkaDora(Math.min(akaDora + 1, 4))}
-                >
-                  <Typography variant='h1'>+</Typography>
-                </Button>
-              </Grid>
-            </Grid>
+  const extraOptionsName = ["Chankan", "Rinshan Kaihou", "Haitei / Houtei", seatWind === null ? "Tenhou / Chiihou" : seatWind.index === 0 ? "Tenhou" : "Chiihou"];
+  const extraOptionsContent = (
+    <Grid container direction="column" sx={{ px: 3, pt: 3 }}>
+      <Grid item container direction="row" alignItems="center">
+        <Grid item>
+          <Typography variant='h1'>Aka dora: </Typography>
+        </Grid>
+        <Grid item container xs justifyContent="flex-end" alignItems="center">
+          <Grid item>
+            <Button
+              sx={{
+                backgroundColor: theme.palette.background.default,
+                minWidth: 0,
+                width: "2em",
+                height: "2em",
+                mr: 1,
+                "&:hover": {
+                  backgroundColor: theme.palette.background.default
+                }
+              }}
+              onClick={() => setAkaDora(Math.max(akaDora - 1, 0))}
+            >
+              <Typography variant='h1'>-</Typography>
+            </Button>
+          </Grid>
+          <Grid item>
+            <Typography variant='h1'>{akaDora}</Typography>
           </Grid>
           <Grid item>
             <Button
-              sx={[styles.button, {
-                backgroundColor: ippatsu ? "#535A64" : theme.palette.background.default,
-                width: "100%", mt: 2,
+              sx={{
+                backgroundColor: theme.palette.background.default,
+                minWidth: 0,
+                width: "2em",
+                height: "2em",
+                ml: 1,
                 "&:hover": {
-                  backgroundColor: !matchesSM || (matchesSM && ippatsu) ? "#535A64" : undefined
+                  backgroundColor: theme.palette.background.default
                 }
-              }]}
-              onClick={() => { setIppatsu(!ippatsu); setExtraIndex(extraIndex % 2 === 0 ? false : extraIndex) }}
+              }}
+              onClick={() => setAkaDora(Math.min(akaDora + 1, 4))}
             >
-              <Typography variant='h1' >Ippatsu</Typography>
+              <Typography variant='h1'>+</Typography>
             </Button>
           </Grid>
-          {extraOptionsName.map((name, index) => (
-            <Grid item key={`${name}${index}`}>
-              <Button
-                sx={[styles.button, {
-                  backgroundColor: index + 1 === extraIndex ? "#535A64" : theme.palette.background.default,
-                  width: "100%", mt: 2,
-                  "&:hover": {
-                    backgroundColor: !matchesSM || (matchesSM && index + 1 === extraIndex) ? "#535A64" : undefined
-                  }
-                }]}
-                onClick={() => { extraIndex === index + 1 ? setExtraIndex(0) : setExtraIndex(index + 1); setIppatsu((index + 1) % 2 === 0 ? false : ippatsu) }}
-              >
-                <Typography variant='h1' >{name}</Typography>
-              </Button>
-            </Grid>
-          ))}
         </Grid>
-      </Box>
-      <Box display="flex" justifyContent="center" sx={{ mx: "auto", width: "60px", height: "30px", transform: "translateY(30px)", backgroundColor: theme.palette.primary.main, borderRadius: "0 0 15px 15px", boxShadow: 4 }}>
-        <IconButton onClick={() => setOpenOptions(!openOptions)} disableRipple sx={{ width: "100%" }}>
-          {openOptions ? <ArrowDropUp color='secondary' /> : <ArrowDropDown color='secondary' />}
+      </Grid>
+      <Grid item>
+        <Button
+          sx={[styles.button, {
+            backgroundColor: ippatsu ? "#535A64" : theme.palette.background.default,
+            width: "100%", mt: 2,
+            "&:hover": {
+              backgroundColor: (!matchesSM && windowHeight >= 500) || ippatsu ? "#535A64" : undefined
+            }
+          }]}
+          onClick={() => { setIppatsu(!ippatsu); setExtraIndex(extraIndex % 2 === 0 ? false : extraIndex) }}
+        >
+          <Typography variant='h1' >Ippatsu</Typography>
+        </Button>
+      </Grid>
+      {extraOptionsName.map((name, index) => (
+        <Grid item key={`${name}${index}`}>
+          <Button
+            sx={[styles.button, {
+              backgroundColor: index + 1 === extraIndex ? "#535A64" : theme.palette.background.default,
+              width: "100%", mt: 2,
+              "&:hover": {
+                backgroundColor: (!matchesSM && windowHeight >= 500) || index + 1 === extraIndex ? "#535A64" : undefined
+              }
+            }]}
+            onClick={() => { extraIndex === index + 1 ? setExtraIndex(0) : setExtraIndex(index + 1); setIppatsu((index + 1) % 2 === 0 ? false : ippatsu) }}
+          >
+            <Typography variant='h1' >{name}</Typography>
+          </Button>
+        </Grid>
+      ))}
+    </Grid>
+  )
+
+  const extraOptions = (
+    <React.Fragment>
+      {windowHeight < 500 ?
+        <Grid container justifyContent="center" sx={{position: "absolute", left: 0}}>
+          <Box display="flex" justifyContent="center" sx={{ mx: "auto", width: "60px", height: "30px", backgroundColor: theme.palette.primary.main, borderRadius: "0 0 15px 15px", boxShadow: 4 }}>
+            <IconButton onClick={() => setOpenOptions(!openOptions)} disableRipple sx={{ width: "100%" }}>
+              {openOptions ? <ArrowDropUp color='secondary' /> : <ArrowDropDown color='secondary' />}
+            </IconButton>
+          </Box>
+        </Grid>
+
+        :
+        <Box sx={styles.extraOptions} justifyContent="center">
+          <Box>
+            {extraOptionsContent}
+          </Box>
+          <Box display="flex" justifyContent="center" sx={{ mx: "auto", width: "60px", height: "30px", transform: "translateY(30px)", backgroundColor: theme.palette.primary.main, borderRadius: "0 0 15px 15px", boxShadow: 4 }}>
+            <IconButton onClick={() => setOpenOptions(!openOptions)} disableRipple sx={{ width: "100%" }}>
+              {openOptions ? <ArrowDropUp color='secondary' /> : <ArrowDropDown color='secondary' />}
+            </IconButton>
+          </Box>
+        </Box>
+      }
+      <Dialog sx={{ zIndex: 1302 }} open={windowHeight < 500 ? openOptions : false} fullScreen onClose={() => setOpenOptions(false)} PaperProps={{ sx: { backgroundColor: theme.palette.primary.main, alignItems: "center" } }}>
+        <DialogContent sx={{ minWidth: 400, pt: 0 }}>
+          {extraOptionsContent}
+        </DialogContent>
+        <IconButton
+          aria-label="close"
+          onClick={() => setOpenOptions(false)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: theme.palette.text.primary
+          }}
+        >
+          <CloseIcon />
         </IconButton>
-      </Box>
-    </Box>
+      </Dialog>
+    </React.Fragment>
+
   )
 
   return (
@@ -629,7 +675,7 @@ export default function Index() {
                   sx={[styles.button, {
                     backgroundColor: callSelected === index + 1 ? "#535A64" : undefined,
                     "&:hover": {
-                      backgroundColor: !matchesSM || (matchesSM && callSelected === index + 1) ? "#535A64" : undefined
+                      backgroundColor: !matchesSM || callSelected === index + 1 ? "#535A64" : undefined
                     }
                   }]}
                 >
